@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,10 +31,12 @@ export function Patients() {
               className="pl-9"
             />
           </div>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" />
-            Novo Paciente
-          </Button>
+          <Link to="/pacientes/novo">
+            <Button className="gap-2">
+              <Plus className="w-4 h-4" />
+              Novo Paciente
+            </Button>
+          </Link>
         </div>
 
         {/* Table */}
