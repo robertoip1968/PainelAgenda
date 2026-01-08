@@ -28,7 +28,7 @@ export function Auth() {
         title: "Login realizado!",
         description: "Bem-vindo ao MedAgenda.",
       });
-      navigate('/');
+      navigate('/dashboard');
     }, 1000);
   };
 
@@ -53,7 +53,7 @@ export function Auth() {
         title: "Cadastro realizado!",
         description: "Sua conta foi criada com sucesso.",
       });
-      navigate('/');
+      navigate('/dashboard');
     }, 1000);
   };
 
