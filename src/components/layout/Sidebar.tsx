@@ -13,7 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Calendar, label: 'Agenda', path: '/agenda' },
   { icon: Users, label: 'Pacientes', path: '/pacientes' },
   { icon: UserCog, label: 'Profissionais', path: '/profissionais' },
