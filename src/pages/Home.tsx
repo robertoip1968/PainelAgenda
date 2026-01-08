@@ -42,8 +42,8 @@ const features = [
   },
   {
     icon: Smartphone,
-    title: 'Acesso Mobile',
-    description: 'Interface responsiva para acesso em qualquer dispositivo.',
+    title: 'Agendamento por WhatsApp',
+    description: 'Agendamento rápido pelo WhatsApp.',
   },
 ];
 
