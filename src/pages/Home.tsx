@@ -48,10 +48,9 @@ const features = [
 ];
 
 const plans = [
-  { label: 'Clínicas Médicas', icon: '🏥' },
-  { label: 'Consultórios Odontológicos', icon: '🦷' },
-  { label: 'Laboratórios', icon: '🔬' },
-  { label: 'Clínicas de Imagem', icon: '📷' },
+  { label: 'Clínicas Médicas' },
+  { label: 'Consultórios Odontológicos' },
+  { label: 'Laboratórios' },
 ];
 
 export function Home() {
@@ -125,12 +124,16 @@ export function Home() {
             </Link>
           </div>
           
-          <div className="flex flex-wrap items-center justify-center gap-6 mt-12">
+          <div className="flex flex-wrap items-center justify-center gap-4 mt-12">
             {plans.map((plan) => (
-              <div key={plan.label} className="flex items-center gap-2 text-foreground/80 bg-background/50 backdrop-blur-sm px-3 py-2 rounded-full">
-                <span className="text-2xl">{plan.icon}</span>
-                <span>{plan.label}</span>
-              </div>
+              <Button 
+                key={plan.label} 
+                variant="secondary" 
+                size="lg"
+                className="text-base font-medium px-6 py-3 bg-white/90 hover:bg-white text-foreground shadow-md hover:shadow-lg transition-all backdrop-blur-sm"
+              >
+                {plan.label}
+              </Button>
             ))}
           </div>
         </div>
