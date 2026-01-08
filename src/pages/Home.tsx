@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Check
 } from 'lucide-react';
+import clinicReception from '@/assets/clinic-reception.jpg';
 
 const features = [
   {
@@ -80,9 +81,21 @@ export function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 px-6">
-        <div className="container mx-auto text-center max-w-4xl">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+      <section className="relative py-20 px-6 min-h-[600px] flex items-center">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 z-0"
+          style={{
+            backgroundImage: `url(${clinicReception})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/70 to-background" />
+        </div>
+        
+        <div className="container mx-auto text-center max-w-4xl relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 backdrop-blur-sm text-primary text-sm font-medium mb-6">
             <UserCheck className="w-4 h-4" />
             Sistema completo de agendamentos
           </div>
@@ -106,7 +119,7 @@ export function Home() {
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="text-lg px-8">
+              <Button size="lg" variant="outline" className="text-lg px-8 bg-background/50 backdrop-blur-sm">
                 Ver Demonstração
               </Button>
             </Link>
@@ -114,7 +127,7 @@ export function Home() {
           
           <div className="flex flex-wrap items-center justify-center gap-6 mt-12">
             {plans.map((plan) => (
-              <div key={plan.label} className="flex items-center gap-2 text-muted-foreground">
+              <div key={plan.label} className="flex items-center gap-2 text-foreground/80 bg-background/50 backdrop-blur-sm px-3 py-2 rounded-full">
                 <span className="text-2xl">{plan.icon}</span>
                 <span>{plan.label}</span>
               </div>
