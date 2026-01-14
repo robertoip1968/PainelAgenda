@@ -78,3 +78,13 @@ export const APPOINTMENT_TYPE_LABELS: Record<Appointment['type'], string> = {
   'return': 'Retorno',
   'procedure': 'Procedimento',
 };
+
+export interface WhatsAppMessage {
+  id: string;
+  phone: string;
+  client: string;
+  direction: 'sent' | 'received';
+  text: string;
+  intent: string;
+  dateTime: Date;
+}

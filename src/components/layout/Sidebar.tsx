@@ -8,7 +8,8 @@ import {
   Settings, 
   ChevronLeft,
   ChevronRight,
-  Stethoscope
+  Stethoscope,
+  MessageCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,7 @@ const menuItems = [
   { icon: Calendar, label: 'Agenda', path: '/agenda' },
   { icon: Users, label: 'Pacientes', path: '/pacientes' },
   { icon: UserCog, label: 'Profissionais', path: '/profissionais' },
+  { icon: MessageCircle, label: 'Mensagens', path: '/mensagens' },
   { icon: Settings, label: 'Configurações', path: '/configuracoes' },
 ];
 
