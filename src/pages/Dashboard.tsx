@@ -47,7 +47,7 @@ const chartData = [
   { name: 'Confirmações', value: 25, color: '#F59E0B' },
   { name: 'Cancelamentos', value: 15, color: '#10B981' },
   { name: 'Reagendamento', value: 10, color: '#6EE7B7' },
-  { name: 'No-show', value: 8, color: '#BAE6FD' },
+  { name: 'No-show', value: 8, color: '#EF4444' },
 ];
 
 export function Dashboard() {
