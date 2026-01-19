@@ -37,13 +37,13 @@
 
     --radius: 0.5rem;
 
-    /* Status Colors */
-    --status-waiting: 0 75% 70%;
+    /* Status Colors - matching reference image */
+    --status-waiting: 0 75% 60%;
     --status-confirmed: 210 80% 55%;
-    --status-queue: 45 85% 70%;
-    --status-in-progress: 30 85% 60%;
-    --status-completed: 175 50% 50%;
-    --status-absent: 0 0% 25%;
+    --status-queue: 45 90% 55%;
+    --status-in-progress: 30 90% 55%;
+    --status-completed: 140 60% 45%;
+    --status-absent: 0 0% 20%;
 
     /* Sidebar */
     --sidebar-background: 215 25% 18%;
