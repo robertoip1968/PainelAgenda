@@ -6,8 +6,8 @@ import { TimeSlotGrid } from '@/components/schedule/TimeSlotGrid';
 import { ProfessionalTabs } from '@/components/schedule/ProfessionalTabs';
 import { AppointmentModal } from '@/components/schedule/AppointmentModal';
 import { Button } from '@/components/ui/button';
-import { appointments, professionals } from '@/data/mockData';
-import { Appointment } from '@/types';
+import { appointments as initialAppointments, professionals } from '@/data/mockData';
+import { Appointment, AppointmentStatus } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Plus, Search, Printer } from 'lucide-react';
@@ -19,8 +19,9 @@ export function Agenda() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState('08:00');
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
 
-  const filteredAppointments = appointments.filter((apt) => {
+  const filteredAppointments = appointmentsList.filter((apt) => {
     const dateMatch = apt.date === format(selectedDate, 'yyyy-MM-dd');
     const profMatch = selectedProfessional ? apt.professionalId === selectedProfessional : true;
     return dateMatch && profMatch;
@@ -32,6 +33,18 @@ export function Agenda() {
     if (!appointment) {
       setModalOpen(true);
     }
+  };
+
+  const handleStatusChange = (appointmentId: string, newStatus: AppointmentStatus) => {
+    setAppointmentsList(prev => 
+      prev.map(apt => 
+        apt.id === appointmentId ? { ...apt, status: newStatus } : apt
+      )
+    );
+    // Update selected appointment if it's the one being changed
+    setSelectedAppointment(prev => 
+      prev?.id === appointmentId ? { ...prev, status: newStatus } : prev
+    );
   };
 
   const handleSaveAppointment = (data: any) => {
@@ -72,6 +85,7 @@ export function Agenda() {
           <TimeSlotGrid
             appointments={filteredAppointments}
             onSlotClick={handleSlotClick}
+            onStatusChange={handleStatusChange}
           />
 
           {/* Selected appointment details */}
