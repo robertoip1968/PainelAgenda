@@ -88,3 +88,9 @@ export interface WhatsAppMessage {
   intent: string;
   dateTime: Date;
 }
+
+export interface HealthInsurance {
+  id: string;
+  name: string;
+  active: boolean;
+}
