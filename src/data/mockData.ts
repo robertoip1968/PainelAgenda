@@ -1,4 +1,14 @@
-import { Professional, Patient, Appointment } from '@/types';
+import { Professional, Patient, Appointment, HealthInsurance } from '@/types';
+
+export const healthInsurances: HealthInsurance[] = [
+  { id: '1', name: 'Unimed', active: true },
+  { id: '2', name: 'Bradesco Saúde', active: true },
+  { id: '3', name: 'SulAmérica', active: true },
+  { id: '4', name: 'Amil', active: true },
+  { id: '5', name: 'NotreDame Intermédica', active: true },
+  { id: '6', name: 'Hapvida', active: false },
+  { id: '7', name: 'Particular', active: true },
+];
 
 export const professionals: Professional[] = [
   {
