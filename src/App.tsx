@@ -14,6 +14,7 @@ import { ProfessionalForm } from "./pages/ProfessionalForm";
 import { Messages } from "./pages/Messages";
 import { Settings } from "./pages/Settings";
 import { HealthInsurances } from "./pages/HealthInsurances";
+import { Specialties } from "./pages/Specialties";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/profissionais/novo" element={<ProfessionalForm />} />
           <Route path="/mensagens" element={<Messages />} />
           <Route path="/convenios" element={<HealthInsurances />} />
+          <Route path="/especialidades" element={<Specialties />} />
           <Route path="/configuracoes" element={<Settings />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
