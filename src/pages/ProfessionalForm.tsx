@@ -49,7 +49,7 @@ export function ProfessionalForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [professionalType, setProfessionalType] = useState<'medical' | 'dental'>('medical');
+  
   
   const [formData, setFormData] = useState({
     name: '',
@@ -124,22 +124,6 @@ export function ProfessionalForm() {
             <CardDescription>Informações básicas e registro profissional</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-4 pb-4 border-b border-border">
-              <Button
-                type="button"
-                variant={professionalType === 'medical' ? 'default' : 'outline'}
-                onClick={() => setProfessionalType('medical')}
-              >
-                Área Médica (CRM)
-              </Button>
-              <Button
-                type="button"
-                variant={professionalType === 'dental' ? 'default' : 'outline'}
-                onClick={() => setProfessionalType('dental')}
-              >
-                Área Odontológica (CRO)
-              </Button>
-            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="md:col-span-2 space-y-2">
@@ -154,17 +138,12 @@ export function ProfessionalForm() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="registration">
-                  {professionalType === 'medical' ? 'CRM *' : 'CRO *'}
-                </Label>
+                <Label htmlFor="registration">Registro Profissional *</Label>
                 <Input
                   id="registration"
-                  value={professionalType === 'medical' ? formData.crm : formData.cro}
-                  onChange={(e) => updateForm(
-                    professionalType === 'medical' ? 'crm' : 'cro', 
-                    e.target.value
-                  )}
-                  placeholder={professionalType === 'medical' ? 'CRM/UF 00000' : 'CRO/UF 00000'}
+                  value={formData.crm}
+                  onChange={(e) => updateForm('crm', e.target.value)}
+                  placeholder="CRM/CRO-UF 00000"
                   required
                 />
               </div>
