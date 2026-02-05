@@ -92,18 +92,18 @@ export function Home() {
         />
         
         <div className="container mx-auto text-center max-w-4xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 text-primary text-sm font-medium mb-6 shadow-lg">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-medium mb-6 shadow-lg">
             <UserCheck className="w-4 h-4" />
             Sistema completo de agendamentos
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-slate-800">
             Gerencie sua clínica com{' '}
-            <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">simplicidade</span> e{' '}
-            <span className="text-secondary drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">eficiência</span>
+            <span className="text-primary">simplicidade</span> e{' '}
+            <span className="text-secondary">eficiência</span>
           </h1>
           
-          <p className="text-xl text-white mb-8 max-w-2xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+          <p className="text-xl text-slate-700 mb-8 max-w-2xl mx-auto">
             Plataforma completa para agendamento de consultas e exames. 
             Ideal para clínicas médicas, odontológicas, laboratórios e clínicas de imagem.
           </p>
