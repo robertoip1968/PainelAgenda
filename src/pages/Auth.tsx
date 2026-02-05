@@ -59,74 +59,31 @@ export function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div 
-        className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 text-white relative"
-        style={{
-          backgroundImage: `url(${clinicReception})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-primary/60" />
-        <div className="max-w-md space-y-6 relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
-              <Calendar className="w-8 h-8" />
-            </div>
-            <h1 className="text-4xl font-bold">MedAgenda</h1>
-          </div>
-          
-          <p className="text-xl text-white/90 leading-relaxed">
-            Sistema completo de gerenciamento de agendamentos para clínicas e consultórios.
-          </p>
-          
-          <div className="space-y-4 pt-6">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <span className="text-lg">Multi-profissional</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <span className="text-lg">Agenda inteligente</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <span className="text-lg">Relatórios detalhados</span>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div 
+      className="min-h-screen flex items-center justify-center p-6"
+      style={{
+        backgroundImage: `url(${clinicReception})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/30" />
 
-      {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-background">
-        <Card className="w-full max-w-md border-0 shadow-2xl">
-          <CardHeader className="text-center pb-2">
-            <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center text-white">
-                <Calendar className="w-5 h-5" />
-              </div>
-              <span className="text-2xl font-bold text-primary">MedAgenda</span>
+      {/* Auth Card */}
+      <Card className="w-full max-w-md border-0 shadow-2xl relative z-10 bg-background/95 backdrop-blur-sm">
+        <CardHeader className="text-center pb-2">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center text-white">
+              <Calendar className="w-5 h-5" />
             </div>
-            <CardTitle className="text-2xl">Bem-vindo!</CardTitle>
-            <CardDescription>
-              Entre na sua conta ou crie uma nova
-            </CardDescription>
-          </CardHeader>
+            <span className="text-2xl font-bold text-primary">MedAgenda</span>
+          </div>
+          <CardTitle className="text-2xl">Bem-vindo!</CardTitle>
+          <CardDescription>
+            Entre na sua conta ou crie uma nova
+          </CardDescription>
+        </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -268,7 +225,6 @@ export function Auth() {
             </Tabs>
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }
