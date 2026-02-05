@@ -92,7 +92,7 @@ export function Home() {
         />
         
         <div className="container mx-auto text-center max-w-4xl relative z-10">
-          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
               <UserCheck className="w-4 h-4" />
               Sistema completo de agendamentos
