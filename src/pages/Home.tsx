@@ -98,7 +98,7 @@ export function Home() {
               Sistema completo de agendamentos
             </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-foreground">
+            <h1 className="text-2xl md:text-4xl font-bold mb-6 leading-tight text-foreground">
               Gerencie os agendamentos da sua clínica com{' '}
               <span className="text-primary">tecnologia</span> e{' '}
               <span className="text-secondary">eficiência</span>
