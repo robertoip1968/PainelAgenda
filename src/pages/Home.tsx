@@ -104,7 +104,7 @@ export function Home() {
               <span className="text-secondary">eficiência</span>
             </h1>
             
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-xl text-foreground mb-8 max-w-2xl mx-auto">
               Plataforma completa para agendamento de consultas e exames. 
               Ideal para clínicas médicas, odontológicas, laboratórios e clínicas de imagem.
             </p>
