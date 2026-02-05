@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import clinicReception from '@/assets/clinic-reception.png';
 
 export function Auth() {
   const navigate = useNavigate();
@@ -60,8 +61,17 @@ export function Auth() {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 gradient-primary flex-col justify-center items-center p-12 text-white">
-        <div className="max-w-md space-y-6">
+      <div 
+        className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 text-white relative"
+        style={{
+          backgroundImage: `url(${clinicReception})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-primary/60" />
+        <div className="max-w-md space-y-6 relative z-10">
           <div className="flex items-center gap-3">
             <div className="w-14 h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
               <Calendar className="w-8 h-8" />
