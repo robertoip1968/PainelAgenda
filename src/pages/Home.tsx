@@ -48,8 +48,8 @@ const features = [
 ];
 
 const plans = [
-  { label: 'Clínicas Médicas' },
-  { label: 'Consultórios Odontológicos' },
+  { label: 'Clínicas' },
+  { label: 'Consultórios' },
   { label: 'Laboratórios' },
 ];
 
@@ -98,8 +98,8 @@ export function Home() {
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-slate-800">
-            Gerencie sua clínica com{' '}
-            <span className="text-primary">simplicidade</span> e{' '}
+            Gerencie os agendamentos da sua clínica com{' '}
+            <span className="text-primary">tecnologia</span> e{' '}
             <span className="text-secondary">eficiência</span>
           </h1>
           
@@ -108,21 +108,9 @@ export function Home() {
             Ideal para clínicas médicas, odontológicas, laboratórios e clínicas de imagem.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/auth">
-              <Button size="lg" className="text-lg px-8 gap-2 shadow-lg">
-                Começar Gratuitamente
-                <ArrowRight className="w-5 h-5" />
-              </Button>
-            </Link>
-            <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-white/95 hover:bg-white text-foreground shadow-lg border-0">
-                Ver Demonstração
-              </Button>
-            </Link>
-          </div>
+          <p className="text-lg font-semibold text-slate-800 mb-4">Atendemos</p>
           
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-12">
+          <div className="flex flex-wrap items-center justify-center gap-4">
             {plans.map((plan) => (
               <Button 
                 key={plan.label} 
