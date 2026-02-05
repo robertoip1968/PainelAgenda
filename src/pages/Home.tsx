@@ -81,7 +81,7 @@ export function Home() {
 
       {/* Hero Section */}
       <section className="relative py-20 px-6 min-h-[600px] flex items-center">
-        {/* Background Image */}
+        {/* Background Image - sem overlay */}
         <div 
           className="absolute inset-0 z-0"
           style={{
@@ -89,36 +89,34 @@ export function Home() {
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-background/30 to-background/80" />
-        </div>
+        />
         
         <div className="container mx-auto text-center max-w-4xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 backdrop-blur-sm text-primary text-sm font-medium mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/90 text-primary text-sm font-medium mb-6 shadow-lg">
             <UserCheck className="w-4 h-4" />
             Sistema completo de agendamentos
           </div>
           
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             Gerencie sua clínica com{' '}
-            <span className="text-primary">simplicidade</span> e{' '}
-            <span className="text-secondary">eficiência</span>
+            <span className="text-primary drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">simplicidade</span> e{' '}
+            <span className="text-secondary drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">eficiência</span>
           </h1>
           
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white mb-8 max-w-2xl mx-auto drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
             Plataforma completa para agendamento de consultas e exames. 
             Ideal para clínicas médicas, odontológicas, laboratórios e clínicas de imagem.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/auth">
-              <Button size="lg" className="text-lg px-8 gap-2">
+              <Button size="lg" className="text-lg px-8 gap-2 shadow-lg">
                 Começar Gratuitamente
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-background/50 backdrop-blur-sm">
+              <Button size="lg" variant="outline" className="text-lg px-8 bg-white/95 hover:bg-white text-foreground shadow-lg border-0">
                 Ver Demonstração
               </Button>
             </Link>
@@ -130,7 +128,7 @@ export function Home() {
                 key={plan.label} 
                 variant="secondary" 
                 size="lg"
-                className="text-base font-medium px-6 py-3 bg-white/90 hover:bg-white text-foreground shadow-md hover:shadow-lg transition-all backdrop-blur-sm"
+                className="text-base font-medium px-6 py-3 bg-white/95 hover:bg-white text-foreground shadow-lg hover:shadow-xl transition-all"
               >
                 {plan.label}
               </Button>
