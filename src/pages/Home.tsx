@@ -12,7 +12,7 @@ import {
   ArrowRight,
   Check
 } from 'lucide-react';
-import clinicReception from '@/assets/clinic-reception.jpg';
+import clinicReception from '@/assets/clinic-reception.png';
 
 const features = [
   {
