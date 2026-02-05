@@ -3,12 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { appointments, professionals, patients } from '@/data/mockData';
 import { Calendar, Users, UserCog, Clock, TrendingUp, AlertCircle } from 'lucide-react';
 import { StatusBadge } from '@/components/schedule/StatusBadge';
+import { ChartDetailTable } from '@/components/dashboard/ChartDetailTable';
 import { format, startOfWeek, endOfWeek, subWeeks } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { AppointmentStatus } from '@/types';
 
 const stats = [
   {
@@ -50,9 +52,76 @@ const chartData = [
   { name: 'No-show', value: 8, color: '#EF4444' },
 ];
 
+// Mock data for the detail table based on category
+const getMockDataForCategory = (category: string) => {
+  const baseData = [
+    {
+      id: '1',
+      patientName: 'João Pedro Almeida',
+      professionalName: 'Dr. Carlos Silva',
+      date: format(new Date(), 'dd/MM/yyyy'),
+      time: '08:00',
+      status: 'confirmed' as AppointmentStatus,
+      type: 'Consulta',
+    },
+    {
+      id: '2',
+      patientName: 'Maria Fernanda Lima',
+      professionalName: 'Dra. Maria Santos',
+      date: format(new Date(), 'dd/MM/yyyy'),
+      time: '09:30',
+      status: 'waiting' as AppointmentStatus,
+      type: 'Retorno',
+    },
+    {
+      id: '3',
+      patientName: 'Pedro Henrique Santos',
+      professionalName: 'Dr. Roberto Oliveira',
+      date: format(new Date(), 'dd/MM/yyyy'),
+      time: '10:00',
+      status: 'completed' as AppointmentStatus,
+      type: 'Exame',
+    },
+    {
+      id: '4',
+      patientName: 'Ana Carolina Souza',
+      professionalName: 'Dra. Ana Costa',
+      date: format(new Date(), 'dd/MM/yyyy'),
+      time: '11:00',
+      status: 'in-progress' as AppointmentStatus,
+      type: 'Procedimento',
+    },
+    {
+      id: '5',
+      patientName: 'Lucas Martins',
+      professionalName: 'Dr. Carlos Silva',
+      date: format(new Date(), 'dd/MM/yyyy'),
+      time: '14:00',
+      status: 'queue' as AppointmentStatus,
+      type: 'Consulta',
+    },
+  ];
+
+  const statusMap: Record<string, AppointmentStatus> = {
+    'Contatos': 'waiting',
+    'Agendamentos': 'confirmed',
+    'Confirmações': 'confirmed',
+    'Cancelamentos': 'absent',
+    'Reagendamento': 'waiting',
+    'No-show': 'absent',
+  };
+
+  return baseData.map((item, index) => ({
+    ...item,
+    id: `${category}-${index}`,
+    status: statusMap[category] || item.status,
+  })).slice(0, chartData.find(c => c.name === category)?.value ? Math.min(5, chartData.find(c => c.name === category)!.value) : 0);
+};
+
 export function Dashboard() {
   const [weekFilter, setWeekFilter] = useState('current');
   const [dateFilter, setDateFilter] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   const todayAppointments = appointments.slice(0, 5);
   const pendingConfirmations = appointments.filter((a) => a.status === 'waiting');
@@ -67,6 +136,12 @@ export function Dashboard() {
     }
     return '';
   };
+
+  const handlePieClick = (data: { name: string }) => {
+    setSelectedCategory(data.name);
+  };
+
+  const tableData = selectedCategory ? getMockDataForCategory(selectedCategory) : [];
 
   return (
     <MainLayout 
@@ -136,9 +211,16 @@ export function Dashboard() {
                         outerRadius={120}
                         paddingAngle={2}
                         dataKey="value"
+                        onClick={handlePieClick}
+                        cursor="pointer"
                       >
                         {chartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={entry.color}
+                            stroke={selectedCategory === entry.name ? 'hsl(var(--foreground))' : 'none'}
+                            strokeWidth={selectedCategory === entry.name ? 3 : 0}
+                          />
                         ))}
                       </Pie>
                       <Tooltip 
@@ -160,7 +242,7 @@ export function Dashboard() {
                 </div>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-2">
-                Período: {getWeekLabel()}
+                Período: {getWeekLabel()} • Clique em uma fatia para ver detalhes
               </p>
             </CardContent>
           </Card>
@@ -197,7 +279,13 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Today's Appointments - Moved below */}
+        {/* Chart Detail Table */}
+        <ChartDetailTable 
+          selectedCategory={selectedCategory} 
+          data={tableData} 
+        />
+
+        {/* Today's Appointments */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Próximos Atendimentos</CardTitle>
@@ -224,40 +312,6 @@ export function Dashboard() {
                   <StatusBadge status={apt.status} />
                 </div>
               ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Professionals Overview */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg font-semibold">Profissionais</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {professionals.map((prof) => {
-                const profAppointments = appointments.filter((a) => a.professionalId === prof.id);
-                return (
-                  <div
-                    key={prof.id}
-                    className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-full gradient-primary flex items-center justify-center text-white font-semibold">
-                        {prof.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{prof.name}</p>
-                        <p className="text-xs text-muted-foreground">{prof.specialty}</p>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Hoje:</span>
-                      <span className="font-medium">{profAppointments.length} agendamentos</span>
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </CardContent>
         </Card>
