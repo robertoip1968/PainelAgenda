@@ -92,35 +92,37 @@ export function Home() {
         />
         
         <div className="container mx-auto text-center max-w-4xl relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white text-primary text-sm font-medium mb-6 shadow-lg">
-            <UserCheck className="w-4 h-4" />
-            Sistema completo de agendamentos
-          </div>
-          
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-slate-800">
-            Gerencie os agendamentos da sua clínica com{' '}
-            <span className="text-primary">tecnologia</span> e{' '}
-            <span className="text-secondary">eficiência</span>
-          </h1>
-          
-          <p className="text-xl text-primary mb-8 max-w-2xl mx-auto">
-            Plataforma completa para agendamento de consultas e exames. 
-            Ideal para clínicas médicas, odontológicas, laboratórios e clínicas de imagem.
-          </p>
-          
-          <p className="text-lg font-semibold text-slate-800 mb-4">Atendemos</p>
-          
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            {plans.map((plan) => (
-              <Button 
-                key={plan.label} 
-                variant="secondary" 
-                size="lg"
-                className="text-base font-medium px-6 py-3 bg-white/95 hover:bg-white text-foreground shadow-lg hover:shadow-xl transition-all"
-              >
-                {plan.label}
-              </Button>
-            ))}
+          <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8 shadow-xl">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
+              <UserCheck className="w-4 h-4" />
+              Sistema completo de agendamentos
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-foreground">
+              Gerencie os agendamentos da sua clínica com{' '}
+              <span className="text-primary">tecnologia</span> e{' '}
+              <span className="text-secondary">eficiência</span>
+            </h1>
+            
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Plataforma completa para agendamento de consultas e exames. 
+              Ideal para clínicas médicas, odontológicas, laboratórios e clínicas de imagem.
+            </p>
+            
+            <p className="text-lg font-semibold text-foreground mb-4">Atendemos</p>
+            
+            <div className="flex flex-wrap items-center justify-center gap-4">
+              {plans.map((plan) => (
+                <Button 
+                  key={plan.label} 
+                  variant="secondary" 
+                  size="lg"
+                  className="text-base font-medium px-6 py-3 shadow-md hover:shadow-lg transition-all"
+                >
+                  {plan.label}
+                </Button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
