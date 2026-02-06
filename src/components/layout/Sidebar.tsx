@@ -37,15 +37,15 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="p-4 border-b border-gray-200">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
             <Stethoscope className="w-6 h-6 text-white" />
           </div>
           {!collapsed && (
             <div className="animate-fade-in">
-              <h1 className="font-semibold text-lg">MedAgenda</h1>
-              <p className="text-xs text-sidebar-foreground/60">Gestão de Clínicas</p>
+              <h1 className="font-semibold text-lg text-gray-900">MedAgenda</h1>
+              <p className="text-xs text-gray-500">Gestão de Clínicas</p>
             </div>
           )}
         </div>
@@ -74,7 +74,7 @@ export function Sidebar() {
 
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="p-3 border-t border-sidebar-border hover:bg-sidebar-accent transition-colors flex items-center justify-center"
+        className="p-3 border-t border-gray-200 hover:bg-primary/10 transition-colors flex items-center justify-center text-gray-700"
       >
         {collapsed ? (
           <ChevronRight className="w-5 h-5" />
