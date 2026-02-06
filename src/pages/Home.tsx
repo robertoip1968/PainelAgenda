@@ -13,7 +13,6 @@ import {
   Check
 } from 'lucide-react';
 import clinicReception from '@/assets/clinic-reception.png';
-import clinicBanner from '@/assets/clinic-banner.png';
 
 const features = [
   {
@@ -79,15 +78,6 @@ export function Home() {
           </div>
         </div>
       </header>
-
-      {/* Banner Image */}
-      <div className="w-full overflow-hidden">
-        <img 
-          src={clinicBanner} 
-          alt="Recepção de clínica moderna com tecnologia de ponta" 
-          className="w-full h-auto object-cover"
-        />
-      </div>
 
       {/* Hero Section */}
       <section className="relative py-20 px-6 min-h-[600px] flex items-center">
