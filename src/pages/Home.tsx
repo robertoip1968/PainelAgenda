@@ -16,6 +16,11 @@ import clinicReception from '@/assets/clinic-reception.png';
 
 const features = [
   {
+    icon: Smartphone,
+    title: 'Agendamento por WhatsApp',
+    description: 'Marque seu horário direto pelo WhatsApp.',
+  },
+  {
     icon: Calendar,
     title: 'Agenda Inteligente',
     description: 'Visualize e gerencie agendamentos de forma eficiente com nossa grade de horários interativa.',
@@ -32,18 +37,13 @@ const features = [
   },
   {
     icon: BarChart3,
-    title: 'Relatórios',
+    title: 'Dashboard',
     description: 'Acompanhe métricas importantes como taxa de comparecimento e produtividade.',
   },
   {
     icon: Shield,
     title: 'Seguro e Confiável',
     description: 'Seus dados protegidos com as melhores práticas de segurança.',
-  },
-  {
-    icon: Smartphone,
-    title: 'Agendamento por WhatsApp',
-    description: 'Agendamento rápido pelo WhatsApp.',
   },
 ];
 
