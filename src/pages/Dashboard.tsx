@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { AppointmentStatus } from '@/types';
+import dashboardBanner from '@/assets/dashboard-banner.png';
 
 const stats = [
   {
@@ -149,6 +150,15 @@ export function Dashboard() {
       subtitle={format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
     >
       <div className="space-y-6 animate-fade-in">
+        {/* Banner */}
+        <div className="w-full h-48 rounded-xl overflow-hidden">
+          <img 
+            src={dashboardBanner} 
+            alt="Recepção da clínica" 
+            className="w-full h-full object-cover"
+          />
+        </div>
+
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {stats.map((stat) => (
