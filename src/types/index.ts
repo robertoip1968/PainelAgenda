@@ -1,3 +1,4 @@
+// Reflete o campo `status` da tabela appointments
 export type AppointmentStatus = 
   | 'waiting' 
   | 'confirmed' 
@@ -17,44 +18,46 @@ export interface Professional {
   avatar?: string;
 }
 
+// Reflete a tabela `clients`
 export interface Patient {
   id: string;
-  name: string;
-  birthDate: string;
-  sex: 'M' | 'F';
+  full_name: string;
   cpf: string;
+  birth_date: string;
+  sex: string;
   phone: string;
   email: string;
-  address: {
-    street: string;
-    number: string;
-    complement?: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
-  healthInsurance?: string;
-  hasFinancialResponsible: boolean;
-  financialResponsible?: {
-    name: string;
-    cpf: string;
-  };
+  zip_code?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state_uf?: string;
+  insurance_plan_id?: number;
+  is_active: boolean;
 }
 
+// Reflete a tabela `appointments`
 export interface Appointment {
   id: string;
-  patientId: string;
-  patientName: string;
-  professionalId: string;
-  professionalName: string;
+  cliente_nome: string;
+  cliente_telefone?: string;
+  tipo: string;
+  inicio: string; // timestamptz
+  fim?: string;   // timestamptz
+  status: AppointmentStatus;
+  observacao?: string;
+  protocolo?: string;
+  confirmado?: boolean;
+  confirmado_em?: string;
+  professional_id?: string;
+  professionalName?: string; // nome para exibição
+  service_id?: number;
+  // campos auxiliares para compatibilidade de exibição
   date: string;
   time: string;
-  duration: number; // in minutes
-  type: 'consultation' | 'exam' | 'return' | 'procedure';
-  status: AppointmentStatus;
   healthInsurance?: string;
-  notes?: string;
 }
 
 export interface TimeSlot {
@@ -72,7 +75,7 @@ export const STATUS_LABELS: Record<AppointmentStatus, string> = {
   'absent': 'Falta',
 };
 
-export const APPOINTMENT_TYPE_LABELS: Record<Appointment['type'], string> = {
+export const APPOINTMENT_TYPE_LABELS: Record<string, string> = {
   'consultation': 'Consulta',
   'exam': 'Exame',
   'return': 'Retorno',

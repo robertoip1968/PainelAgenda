@@ -23,7 +23,7 @@ export function Agenda() {
 
   const filteredAppointments = appointmentsList.filter((apt) => {
     const dateMatch = apt.date === format(selectedDate, 'yyyy-MM-dd');
-    const profMatch = selectedProfessional ? apt.professionalId === selectedProfessional : true;
+    const profMatch = selectedProfessional ? apt.professional_id === selectedProfessional : true;
     return dateMatch && profMatch;
   });
 
@@ -95,7 +95,7 @@ export function Agenda() {
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="text-muted-foreground">Paciente:</span>
-                  <p className="font-medium">{selectedAppointment.patientName}</p>
+                  <p className="font-medium">{selectedAppointment.cliente_nome}</p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Profissional:</span>
@@ -107,7 +107,7 @@ export function Agenda() {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Observações:</span>
-                  <p className="font-medium">{selectedAppointment.notes || '-'}</p>
+                  <p className="font-medium">{selectedAppointment.observacao || '-'}</p>
                 </div>
               </div>
             </div>
