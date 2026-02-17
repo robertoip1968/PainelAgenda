@@ -16,7 +16,7 @@ export function Professionals() {
   );
 
   const getProfessionalStats = (profId: string) => {
-    const profAppointments = appointments.filter((a) => a.professionalId === profId);
+    const profAppointments = appointments.filter((a) => a.professional_id === profId);
     const completed = profAppointments.filter((a) => a.status === 'completed').length;
     return { total: profAppointments.length, completed };
   };

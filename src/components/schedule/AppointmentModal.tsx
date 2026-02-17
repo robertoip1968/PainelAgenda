@@ -62,23 +62,23 @@ export function AppointmentModal({
       setFormData({
         ...formData,
         patientId: patient.id,
-        patientName: patient.name,
-        birthDate: patient.birthDate,
+        patientName: patient.full_name,
+        birthDate: patient.birth_date,
         sex: patient.sex,
         cpf: patient.cpf,
         phone: patient.phone,
         email: patient.email,
-        street: patient.address.street,
-        number: patient.address.number,
-        complement: patient.address.complement || '',
-        neighborhood: patient.address.neighborhood,
-        city: patient.address.city,
-        state: patient.address.state,
-        zipCode: patient.address.zipCode,
-        hasFinancialResponsible: patient.hasFinancialResponsible,
-        financialResponsibleName: patient.financialResponsible?.name || '',
-        financialResponsibleCpf: patient.financialResponsible?.cpf || '',
-        healthInsurance: patient.healthInsurance || '',
+        street: patient.street || '',
+        number: patient.number || '',
+        complement: patient.complement || '',
+        neighborhood: patient.neighborhood || '',
+        city: patient.city || '',
+        state: patient.state_uf || '',
+        zipCode: patient.zip_code || '',
+        hasFinancialResponsible: false,
+        financialResponsibleName: '',
+        financialResponsibleCpf: '',
+        healthInsurance: patient.insurance_plan_id ? String(patient.insurance_plan_id) : '',
       });
     }
   };
@@ -145,7 +145,7 @@ export function AppointmentModal({
                   <SelectContent>
                     {patients.map((patient) => (
                       <SelectItem key={patient.id} value={patient.id}>
-                        {patient.name}
+                        {patient.full_name}
                       </SelectItem>
                     ))}
                   </SelectContent>

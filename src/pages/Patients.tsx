@@ -12,7 +12,7 @@ export function Patients() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredPatients = patients.filter((patient) =>
-    patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     patient.cpf.includes(searchTerm) ||
     patient.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -59,20 +59,20 @@ export function Patients() {
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-sm font-medium text-primary">
-                          {patient.name.charAt(0)}
+                          {patient.full_name.charAt(0)}
                         </span>
                       </div>
                       <div>
-                        <p className="font-medium">{patient.name}</p>
+                        <p className="font-medium">{patient.full_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {patient.address.city}, {patient.address.state}
+                          {patient.city}{patient.state_uf ? `, ${patient.state_uf}` : ''}
                         </p>
                       </div>
                     </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm">{patient.cpf}</TableCell>
                   <TableCell>
-                    {format(new Date(patient.birthDate), 'dd/MM/yyyy')}
+                    {format(new Date(patient.birth_date), 'dd/MM/yyyy')}
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
@@ -88,7 +88,7 @@ export function Patients() {
                   </TableCell>
                   <TableCell>
                     <span className="px-2 py-1 text-xs rounded-full bg-secondary/20 text-secondary">
-                      {patient.healthInsurance || 'Particular'}
+                      {patient.insurance_plan_id ? `Plano #${patient.insurance_plan_id}` : 'Particular'}
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

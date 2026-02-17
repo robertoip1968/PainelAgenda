@@ -277,7 +277,7 @@ export function Dashboard() {
                       key={apt.id}
                       className="p-3 rounded-lg border border-status-waiting/30 bg-status-waiting/5"
                     >
-                      <p className="font-medium text-sm">{apt.patientName}</p>
+                      <p className="font-medium text-sm">{apt.cliente_nome}</p>
                       <p className="text-xs text-muted-foreground">
                         {apt.time} • {apt.professionalName}
                       </p>
@@ -315,7 +315,7 @@ export function Dashboard() {
                       <p className="text-lg font-bold text-primary">{apt.time}</p>
                     </div>
                     <div>
-                      <p className="font-medium">{apt.patientName}</p>
+                       <p className="font-medium">{apt.cliente_nome}</p>
                       <p className="text-sm text-muted-foreground">{apt.professionalName}</p>
                     </div>
                   </div>

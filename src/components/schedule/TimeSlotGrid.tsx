@@ -100,9 +100,9 @@ export function TimeSlotGrid({
               >
                 {appointment && (
                   <div className="animate-fade-in">
-                    <p className="font-medium text-sm">{appointment.patientName}</p>
+                    <p className="font-medium text-sm">{appointment.cliente_nome}</p>
                     <p className="text-xs text-muted-foreground">
-                      {appointment.professionalName} • {appointment.type === 'consultation' ? 'Consulta' : appointment.type === 'exam' ? 'Exame' : appointment.type === 'return' ? 'Retorno' : 'Procedimento'}
+                      {appointment.professionalName} • {appointment.tipo === 'consultation' ? 'Consulta' : appointment.tipo === 'exam' ? 'Exame' : appointment.tipo === 'return' ? 'Retorno' : 'Procedimento'}
                     </p>
                   </div>
                 )}
