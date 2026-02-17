@@ -21,7 +21,8 @@ interface AppointmentModalProps {
 
 const steps = [
   { id: 1, title: 'Paciente', description: 'Dados do paciente' },
-  { id: 2, title: 'Agendamento', description: 'Convênio e detalhes' },
+  { id: 2, title: 'Data e Tipo', description: 'Data, horário e tipo' },
+  { id: 3, title: 'Agendamento', description: 'Convênio e detalhes' },
 ];
 
 export function AppointmentModal({
@@ -50,8 +51,12 @@ export function AppointmentModal({
     hasFinancialResponsible: false,
     financialResponsibleName: '',
     financialResponsibleCpf: '',
+    // step 2
+    appointmentDate: format(selectedDate, 'yyyy-MM-dd'),
+    appointmentTime: selectedTime,
+    tipo: 'consultation',
+    // step 3
     professionalId: '',
-    type: 'consultation',
     healthInsurance: '',
     notes: '',
   });
@@ -306,6 +311,73 @@ export function AppointmentModal({
 
           {currentStep === 2 && (
             <div className="space-y-4 animate-fade-in">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Data do Agendamento *</Label>
+                  <Input
+                    type="date"
+                    value={formData.appointmentDate}
+                    onChange={(e) => setFormData({ ...formData, appointmentDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Horário *</Label>
+                  <Input
+                    type="time"
+                    value={formData.appointmentTime}
+                    onChange={(e) => setFormData({ ...formData, appointmentTime: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Tipo de Atendimento *</Label>
+                <div className="grid grid-cols-2 gap-2 mt-1">
+                  {[
+                    { value: 'consultation', label: 'Consulta' },
+                    { value: 'return', label: 'Retorno' },
+                    { value: 'exam', label: 'Exame' },
+                    { value: 'procedure', label: 'Procedimento' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, tipo: opt.value })}
+                      className={cn(
+                        "px-4 py-3 rounded-lg border text-sm font-medium transition-colors text-left",
+                        formData.tipo === opt.value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:bg-muted"
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label>Duração estimada</Label>
+                <Select
+                  onValueChange={() => {}}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a duração..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="15">15 minutos</SelectItem>
+                    <SelectItem value="30">30 minutos</SelectItem>
+                    <SelectItem value="45">45 minutos</SelectItem>
+                    <SelectItem value="60">60 minutos</SelectItem>
+                    <SelectItem value="90">90 minutos</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 3 && (
+            <div className="space-y-4 animate-fade-in">
               <div>
                 <Label>Profissional *</Label>
                 <Select
@@ -321,24 +393,6 @@ export function AppointmentModal({
                         {prof.name} - {prof.specialty}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label>Tipo de Atendimento</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => setFormData({ ...formData, type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="consultation">Consulta</SelectItem>
-                    <SelectItem value="return">Retorno</SelectItem>
-                    <SelectItem value="exam">Exame</SelectItem>
-                    <SelectItem value="procedure">Procedimento</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -374,6 +428,7 @@ export function AppointmentModal({
               </div>
             </div>
           )}
+
         </div>
 
         {/* Footer */}
