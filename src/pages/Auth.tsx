@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import clinicReception from '@/assets/clinic-reception.png';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.bmp';
 
 export function Auth() {
   const navigate = useNavigate();
