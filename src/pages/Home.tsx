@@ -66,11 +66,8 @@ export function Home() {
           </div>
           <div className="flex items-center gap-4">
             <Link to="/auth">
-              <Button variant="ghost">Entrar</Button>
-            </Link>
-            <Link to="/auth">
               <Button className="gap-2">
-                Começar Agora
+                Entrar
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -180,12 +177,6 @@ export function Home() {
                 ))}
               </div>
               
-              <Link to="/auth" className="inline-block mt-8">
-                <Button size="lg" className="gap-2">
-                  Experimente Agora
-                  <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
             </div>
             
             <div className="relative">
@@ -221,14 +212,18 @@ export function Home() {
             Pronto para transformar sua clínica?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-xl mx-auto">
-            Comece agora mesmo e descubra como o Painel Agenda pode simplificar seu dia a dia.
+            Comece agora mesmo e descubra como podemos simplificar seu dia a dia.
           </p>
-          <Link to="/auth">
+          <a
+            href="https://wa.me/5565984527745"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <Button size="lg" className="text-lg px-10 gap-2">
-              Criar Conta Gratuita
+              Entre em contato agora mesmo
               <ArrowRight className="w-5 h-5" />
             </Button>
-          </Link>
+          </a>
         </div>
       </section>
 
