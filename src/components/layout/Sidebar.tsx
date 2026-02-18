@@ -8,12 +8,12 @@ import {
   Settings, 
   ChevronLeft,
   ChevronRight,
-  Stethoscope,
   MessageCircle,
   FileHeart,
   ClipboardList
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.jpg';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -37,15 +37,17 @@ export function Sidebar() {
         collapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-            <Stethoscope className="w-6 h-6 text-white" />
-          </div>
+          <img
+            src={logo}
+            alt="Painel Agenda"
+            className={cn("object-contain flex-shrink-0", collapsed ? "w-10 h-10" : "h-10")}
+          />
           {!collapsed && (
             <div className="animate-fade-in">
-              <h1 className="font-semibold text-lg text-gray-900">MedAgenda</h1>
-              <p className="text-xs text-gray-500">Gestão de Clínicas</p>
+              <h1 className="font-semibold text-lg text-foreground">Painel Agenda</h1>
+              <p className="text-xs text-muted-foreground">Gestão de Clínicas</p>
             </div>
           )}
         </div>

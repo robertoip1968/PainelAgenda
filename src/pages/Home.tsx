@@ -13,6 +13,7 @@ import {
   Check
 } from 'lucide-react';
 import clinicReception from '@/assets/clinic-reception.png';
+import logo from '@/assets/logo.jpg';
 
 const features = [
   {
@@ -60,10 +61,8 @@ export function Home() {
       <header className="border-b border-border bg-card/50 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center text-white">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <span className="text-2xl font-bold text-primary">MedAgenda</span>
+            <img src={logo} alt="Painel Agenda" className="h-10 object-contain" />
+            <span className="text-2xl font-bold text-primary">Painel Agenda</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/auth">
@@ -161,7 +160,7 @@ export function Home() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Por que escolher o MedAgenda?
+                Por que escolher o Painel Agenda?
               </h2>
               <div className="space-y-4">
                 {[
@@ -222,7 +221,7 @@ export function Home() {
             Pronto para transformar sua clínica?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-xl mx-auto">
-            Comece agora mesmo e descubra como o MedAgenda pode simplificar seu dia a dia.
+            Comece agora mesmo e descubra como o Painel Agenda pode simplificar seu dia a dia.
           </p>
           <Link to="/auth">
             <Button size="lg" className="text-lg px-10 gap-2">
@@ -238,13 +237,11 @@ export function Home() {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center text-white">
-                <Calendar className="w-4 h-4" />
-              </div>
-              <span className="text-xl font-bold text-primary">MedAgenda</span>
+              <img src={logo} alt="Painel Agenda" className="h-8 object-contain" />
+              <span className="text-xl font-bold text-primary">Painel Agenda</span>
             </div>
             <p className="text-muted-foreground text-sm">
-              © 2024 MedAgenda. Todos os direitos reservados.
+              © 2024 Painel Agenda. Todos os direitos reservados.
             </p>
           </div>
         </div>
