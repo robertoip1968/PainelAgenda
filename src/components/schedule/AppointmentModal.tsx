@@ -10,6 +10,7 @@ import { professionals, patients } from '@/data/mockData';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
+import { CheckCircle2, User, Calendar, Stethoscope, ClipboardCheck } from 'lucide-react';
 
 interface AppointmentModalProps {
   open: boolean;
@@ -22,8 +23,16 @@ interface AppointmentModalProps {
 const steps = [
   { id: 1, title: 'Paciente', description: 'Dados do paciente' },
   { id: 2, title: 'Data e Tipo', description: 'Data, horário e tipo' },
-  { id: 3, title: 'Agendamento', description: 'Convênio e detalhes' },
+  { id: 3, title: 'Agendamento', description: 'Profissional e convênio' },
+  { id: 4, title: 'Confirmação', description: 'Resumo e confirmação' },
 ];
+
+const tipoLabels: Record<string, string> = {
+  consultation: 'Consulta',
+  return: 'Retorno',
+  exam: 'Exame',
+  procedure: 'Procedimento',
+};
 
 export function AppointmentModal({
   open,
@@ -54,6 +63,7 @@ export function AppointmentModal({
     // step 2
     appointmentDate: format(selectedDate, 'yyyy-MM-dd'),
     appointmentTime: selectedTime,
+    duration: '30',
     tipo: 'consultation',
     // step 3
     professionalId: '',
@@ -88,11 +98,17 @@ export function AppointmentModal({
     }
   };
 
-  const handleSubmit = () => {
-    onSave(formData);
+  const handleClose = () => {
     onOpenChange(false);
     setCurrentStep(1);
   };
+
+  const handleSubmit = () => {
+    onSave(formData);
+    handleClose();
+  };
+
+  const selectedProfessional = professionals.find((p) => p.id === formData.professionalId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -102,26 +118,29 @@ export function AppointmentModal({
         </DialogHeader>
 
         {/* Steps indicator */}
-        <div className="flex items-center gap-2 mb-4 pb-4 border-b border-border">
+        <div className="flex items-center gap-1 mb-4 pb-4 border-b border-border">
           {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className="flex items-center flex-1">
               <div
                 className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors",
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors w-full",
                   currentStep === step.id
                     ? "bg-primary text-primary-foreground"
                     : currentStep > step.id
-                    ? "bg-secondary text-secondary-foreground"
+                    ? "bg-primary/20 text-primary"
                     : "bg-muted text-muted-foreground"
                 )}
               >
-                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-xs font-medium">
-                  {step.id}
+                <span className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0",
+                  currentStep === step.id ? "bg-white/20" : currentStep > step.id ? "bg-primary/30" : "bg-black/10"
+                )}>
+                  {currentStep > step.id ? <CheckCircle2 className="w-3.5 h-3.5" /> : step.id}
                 </span>
-                <span className="text-sm font-medium">{step.title}</span>
+                <span className="text-xs font-medium truncate">{step.title}</span>
               </div>
               {index < steps.length - 1 && (
-                <div className="w-8 h-px bg-border mx-2" />
+                <div className="w-4 h-px bg-border flex-shrink-0" />
               )}
             </div>
           ))}
@@ -133,12 +152,14 @@ export function AppointmentModal({
             <span className="font-medium">Data:</span>{' '}
             {format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
             {' • '}
-            <span className="font-medium">Horário:</span> {selectedTime}
+            <span className="font-medium">Horário:</span> {formData.appointmentTime || selectedTime}
           </p>
         </div>
 
         {/* Step content */}
         <div className="flex-1 overflow-y-auto px-1">
+
+          {/* STEP 1 — Paciente */}
           {currentStep === 1 && (
             <div className="space-y-4 animate-fade-in">
               <div>
@@ -202,57 +223,6 @@ export function AppointmentModal({
                   </div>
                 </div>
 
-                <div className="col-span-2">
-                  <Label>Logradouro</Label>
-                  <Input
-                    value={formData.street}
-                    onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 col-span-2">
-                  <div>
-                    <Label>Número</Label>
-                    <Input
-                      value={formData.number}
-                      onChange={(e) => setFormData({ ...formData, number: e.target.value })}
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <Label>Complemento</Label>
-                    <Input
-                      value={formData.complement}
-                      onChange={(e) => setFormData({ ...formData, complement: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label>Bairro</Label>
-                  <Input
-                    value={formData.neighborhood}
-                    onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="col-span-2">
-                    <Label>Cidade</Label>
-                    <Input
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <Label>UF</Label>
-                    <Input
-                      value={formData.state}
-                      onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                      maxLength={2}
-                    />
-                  </div>
-                </div>
-
                 <div>
                   <Label>Celular</Label>
                   <Input
@@ -309,6 +279,7 @@ export function AppointmentModal({
             </div>
           )}
 
+          {/* STEP 2 — Data e Tipo */}
           {currentStep === 2 && (
             <div className="space-y-4 animate-fade-in">
               <div className="grid grid-cols-2 gap-4">
@@ -359,7 +330,8 @@ export function AppointmentModal({
               <div>
                 <Label>Duração estimada</Label>
                 <Select
-                  onValueChange={() => {}}
+                  value={formData.duration}
+                  onValueChange={(value) => setFormData({ ...formData, duration: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a duração..." />
@@ -376,6 +348,7 @@ export function AppointmentModal({
             </div>
           )}
 
+          {/* STEP 3 — Profissional e Convênio */}
           {currentStep === 3 && (
             <div className="space-y-4 animate-fade-in">
               <div>
@@ -407,7 +380,7 @@ export function AppointmentModal({
                     <SelectValue placeholder="Particular ou selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Particular</SelectItem>
+                    <SelectItem value="particular">Particular</SelectItem>
                     <SelectItem value="Unimed">Unimed</SelectItem>
                     <SelectItem value="Bradesco Saúde">Bradesco Saúde</SelectItem>
                     <SelectItem value="SulAmérica">SulAmérica</SelectItem>
@@ -429,6 +402,113 @@ export function AppointmentModal({
             </div>
           )}
 
+          {/* STEP 4 — Confirmação */}
+          {currentStep === 4 && (
+            <div className="space-y-4 animate-fade-in">
+              <p className="text-sm text-muted-foreground">
+                Revise os dados antes de confirmar o agendamento.
+              </p>
+
+              {/* Paciente */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <User className="w-4 h-4" />
+                  Paciente
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Nome:</span>
+                    <p className="font-medium">{formData.patientName || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">CPF:</span>
+                    <p className="font-medium">{formData.cpf || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Celular:</span>
+                    <p className="font-medium">{formData.phone || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>
+                    <p className="font-medium">{formData.email || '—'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data e Tipo */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <Calendar className="w-4 h-4" />
+                  Data e Tipo
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Data:</span>
+                    <p className="font-medium">
+                      {formData.appointmentDate
+                        ? format(new Date(formData.appointmentDate + 'T00:00'), "dd/MM/yyyy")
+                        : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Horário:</span>
+                    <p className="font-medium">{formData.appointmentTime || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Tipo:</span>
+                    <p className="font-medium">{tipoLabels[formData.tipo] || formData.tipo}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Duração:</span>
+                    <p className="font-medium">{formData.duration ? `${formData.duration} min` : '—'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Profissional e Convênio */}
+              <div className="rounded-lg border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2 text-primary font-semibold text-sm">
+                  <Stethoscope className="w-4 h-4" />
+                  Profissional e Convênio
+                </div>
+                <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Profissional:</span>
+                    <p className="font-medium">
+                      {selectedProfessional ? `${selectedProfessional.name}` : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Especialidade:</span>
+                    <p className="font-medium">{selectedProfessional?.specialty || '—'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Convênio:</span>
+                    <p className="font-medium">
+                      {formData.healthInsurance === 'particular' || !formData.healthInsurance
+                        ? 'Particular'
+                        : formData.healthInsurance}
+                    </p>
+                  </div>
+                </div>
+                {formData.notes && (
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">Observações:</span>
+                    <p className="font-medium mt-0.5">{formData.notes}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Confirmação visual */}
+              <div className="flex items-center gap-3 rounded-lg bg-primary/5 border border-primary/20 p-4">
+                <ClipboardCheck className="w-5 h-5 text-primary flex-shrink-0" />
+                <p className="text-sm text-primary font-medium">
+                  Ao confirmar, o agendamento será registrado e o paciente poderá ser notificado.
+                </p>
+              </div>
+            </div>
+          )}
+
         </div>
 
         {/* Footer */}
@@ -439,7 +519,7 @@ export function AppointmentModal({
               if (currentStep > 1) {
                 setCurrentStep(currentStep - 1);
               } else {
-                onOpenChange(false);
+                handleClose();
               }
             }}
           >
@@ -455,7 +535,7 @@ export function AppointmentModal({
               }
             }}
           >
-            {currentStep < steps.length ? 'Próximo Passo' : 'Salvar Agendamento'}
+            {currentStep < steps.length ? 'Próximo Passo' : 'Confirmar Agendamento'}
           </Button>
         </div>
       </DialogContent>
