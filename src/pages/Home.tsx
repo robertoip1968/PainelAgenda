@@ -13,7 +13,7 @@ import {
   Check
 } from 'lucide-react';
 import clinicReception from '@/assets/clinic-reception.png';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.bmp';
 
 const features = [
   {
