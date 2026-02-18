@@ -5,9 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import clinicReception from '@/assets/clinic-reception.png';
+import logo from '@/assets/logo.jpg';
 
 export function Auth() {
   const navigate = useNavigate();
@@ -74,10 +75,8 @@ export function Auth() {
       <Card className="w-full max-w-md border-0 shadow-2xl relative z-10 bg-background/95 backdrop-blur-sm">
         <CardHeader className="text-center pb-2">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center text-white">
-              <Calendar className="w-5 h-5" />
-            </div>
-            <span className="text-2xl font-bold text-primary">MedAgenda</span>
+            <img src={logo} alt="Painel Agenda" className="h-10 object-contain" />
+            <span className="text-2xl font-bold text-primary">Painel Agenda</span>
           </div>
           <CardTitle className="text-2xl">Bem-vindo!</CardTitle>
           <CardDescription>
