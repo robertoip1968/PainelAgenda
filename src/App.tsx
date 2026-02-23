@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { TenantProvider } from "@/contexts/TenantContext";
 import { Home } from "./pages/Home";
 import { Auth } from "./pages/Auth";
 import { Dashboard } from "./pages/Dashboard";
@@ -21,27 +22,29 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/agenda" element={<Agenda />} />
-          <Route path="/pacientes" element={<Patients />} />
-          <Route path="/pacientes/novo" element={<PatientForm />} />
-          <Route path="/profissionais" element={<Professionals />} />
-          <Route path="/profissionais/novo" element={<ProfessionalForm />} />
-          <Route path="/mensagens" element={<Messages />} />
-          <Route path="/convenios" element={<HealthInsurances />} />
-          <Route path="/especialidades" element={<Specialties />} />
-          <Route path="/configuracoes" element={<Settings />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <TenantProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/pacientes" element={<Patients />} />
+            <Route path="/pacientes/novo" element={<PatientForm />} />
+            <Route path="/profissionais" element={<Professionals />} />
+            <Route path="/profissionais/novo" element={<ProfessionalForm />} />
+            <Route path="/mensagens" element={<Messages />} />
+            <Route path="/convenios" element={<HealthInsurances />} />
+            <Route path="/especialidades" element={<Specialties />} />
+            <Route path="/configuracoes" element={<Settings />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </TenantProvider>
   </QueryClientProvider>
 );
 
