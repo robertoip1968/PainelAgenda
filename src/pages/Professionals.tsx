@@ -5,17 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { professionals, appointments } from '@/data/mockData';
+import { AREA_LABELS } from '@/types';
 import { Plus, Search, Edit, Calendar, Phone, Mail } from 'lucide-react';
 
 export function Professionals() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredProfessionals = professionals.filter((prof) =>
-    prof.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    prof.specialty.toLowerCase().includes(searchTerm.toLowerCase())
+    prof.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (prof.specialtyName || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getProfessionalStats = (profId: string) => {
+  const getProfessionalStats = (profId: number) => {
     const profAppointments = appointments.filter((a) => a.professional_id === profId);
     const completed = profAppointments.filter((a) => a.status === 'completed').length;
     return { total: profAppointments.length, completed };
@@ -53,11 +54,11 @@ export function Professionals() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-full gradient-primary flex items-center justify-center text-white font-bold text-lg">
-                        {prof.name.charAt(0)}
+                        {prof.full_name.charAt(0)}
                       </div>
                       <div>
-                        <h3 className="font-semibold">{prof.name}</h3>
-                        <p className="text-sm text-muted-foreground">{prof.specialty}</p>
+                        <h3 className="font-semibold">{prof.full_name}</h3>
+                        <p className="text-sm text-muted-foreground">{prof.specialtyName}</p>
                       </div>
                     </div>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -67,7 +68,10 @@ export function Professionals() {
 
                   <div className="space-y-2 mb-4">
                     <p className="text-sm font-medium text-primary">
-                      {prof.crm ? `CRM: ${prof.crm}` : `CRO: ${prof.cro}`}
+                      {prof.numero_conselho}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {AREA_LABELS[prof.area]}
                     </p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Phone className="w-3 h-3" />

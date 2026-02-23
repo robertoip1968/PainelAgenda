@@ -9,32 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Save, User, Clock, Stethoscope } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-const SPECIALTIES = [
-  'Cardiologia',
-  'Clínico Geral',
-  'Dermatologia',
-  'Endocrinologia',
-  'Gastroenterologia',
-  'Ginecologia',
-  'Neurologia',
-  'Oftalmologia',
-  'Ortopedia',
-  'Otorrinolaringologia',
-  'Pediatria',
-  'Psiquiatria',
-  'Urologia',
-  'Odontologia Geral',
-  'Ortodontia',
-  'Endodontia',
-  'Periodontia',
-  'Implantodontia',
-  'Radiologia',
-  'Ultrassonografia',
-  'Tomografia',
-  'Ressonância Magnética',
-  'Análises Clínicas',
-];
+import { specialties } from '@/data/mockData';
+import { ProfessionalArea, AREA_LABELS } from '@/types';
 
 const WEEK_DAYS = [
   { id: 'monday', label: 'Segunda' },
@@ -45,17 +21,22 @@ const WEEK_DAYS = [
   { id: 'saturday', label: 'Sábado' },
 ];
 
+const AREAS: { value: ProfessionalArea; label: string }[] = [
+  { value: 'medico', label: 'Médico' },
+  { value: 'dentista', label: 'Dentista' },
+  { value: 'exame', label: 'Exame' },
+];
+
 export function ProfessionalForm() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   
-  
   const [formData, setFormData] = useState({
-    name: '',
-    specialty: '',
-    crm: '',
-    cro: '',
+    full_name: '',
+    area: '' as string,
+    specialty_id: '',
+    numero_conselho: '',
     phone: '',
     email: '',
     consultationDuration: '30',
@@ -99,6 +80,8 @@ export function ProfessionalForm() {
       .replace(/(-\d{4})\d+?$/, '$1');
   };
 
+  const activeSpecialties = specialties.filter((s) => s.is_active);
+
   return (
     <MainLayout title="Novo Profissional" subtitle="Preencha os dados do profissional">
       <form onSubmit={handleSubmit} className="space-y-6 animate-fade-in max-w-4xl">
@@ -124,39 +107,52 @@ export function ProfessionalForm() {
             <CardDescription>Informações básicas e registro profissional</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="name">Nome completo *</Label>
+                <Label htmlFor="full_name">Nome completo *</Label>
                 <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => updateForm('name', e.target.value)}
+                  id="full_name"
+                  value={formData.full_name}
+                  onChange={(e) => updateForm('full_name', e.target.value)}
                   placeholder="Dr(a). Nome Completo"
                   required
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="area">Área *</Label>
+                <Select value={formData.area} onValueChange={(v) => updateForm('area', v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a área" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {AREAS.map((a) => (
+                      <SelectItem key={a.value} value={a.value}>{a.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               
               <div className="space-y-2">
-                <Label htmlFor="registration">Registro Profissional *</Label>
+                <Label htmlFor="numero_conselho">Registro Profissional *</Label>
                 <Input
-                  id="registration"
-                  value={formData.crm}
-                  onChange={(e) => updateForm('crm', e.target.value)}
-                  placeholder="CRM/CRO-UF 00000"
+                  id="numero_conselho"
+                  value={formData.numero_conselho}
+                  onChange={(e) => updateForm('numero_conselho', e.target.value)}
+                  placeholder="CRM/CRO 00000-UF"
                   required
                 />
               </div>
               
               <div className="md:col-span-2 space-y-2">
-                <Label htmlFor="specialty">Especialidade *</Label>
-                <Select value={formData.specialty} onValueChange={(v) => updateForm('specialty', v)}>
+                <Label htmlFor="specialty_id">Especialidade *</Label>
+                <Select value={formData.specialty_id} onValueChange={(v) => updateForm('specialty_id', v)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a especialidade" />
                   </SelectTrigger>
                   <SelectContent>
-                    {SPECIALTIES.map((spec) => (
-                      <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                    {activeSpecialties.map((spec) => (
+                      <SelectItem key={spec.id} value={String(spec.id)}>{spec.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

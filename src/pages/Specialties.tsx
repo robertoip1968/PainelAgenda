@@ -23,50 +23,23 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Stethoscope } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-interface Specialty {
-  id: string;
-  name: string;
-  active: boolean;
-}
-
-const initialSpecialties: Specialty[] = [
-  { id: '1', name: 'Cardiologia', active: true },
-  { id: '2', name: 'Clínico Geral', active: true },
-  { id: '3', name: 'Dermatologia', active: true },
-  { id: '4', name: 'Endocrinologia', active: true },
-  { id: '5', name: 'Gastroenterologia', active: true },
-  { id: '6', name: 'Ginecologia', active: true },
-  { id: '7', name: 'Neurologia', active: true },
-  { id: '8', name: 'Oftalmologia', active: true },
-  { id: '9', name: 'Ortopedia', active: true },
-  { id: '10', name: 'Otorrinolaringologia', active: true },
-  { id: '11', name: 'Pediatria', active: true },
-  { id: '12', name: 'Psiquiatria', active: true },
-  { id: '13', name: 'Urologia', active: true },
-  { id: '14', name: 'Odontologia Geral', active: true },
-  { id: '15', name: 'Ortodontia', active: true },
-  { id: '16', name: 'Endodontia', active: true },
-  { id: '17', name: 'Periodontia', active: true },
-  { id: '18', name: 'Implantodontia', active: true },
-  { id: '19', name: 'Radiologia', active: false },
-  { id: '20', name: 'Ultrassonografia', active: true },
-];
+import { Specialty } from '@/types';
+import { specialties as initialSpecialtiesData } from '@/data/mockData';
 
 export function Specialties() {
   const { toast } = useToast();
-  const [specialties, setSpecialties] = useState<Specialty[]>(initialSpecialties);
+  const [specialties, setSpecialties] = useState<Specialty[]>(initialSpecialtiesData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
-  const [formData, setFormData] = useState({ name: '', active: true });
+  const [formData, setFormData] = useState({ name: '', is_active: true });
 
   const handleOpenDialog = (specialty?: Specialty) => {
     if (specialty) {
       setEditingSpecialty(specialty);
-      setFormData({ name: specialty.name, active: specialty.active });
+      setFormData({ name: specialty.name, is_active: specialty.is_active });
     } else {
       setEditingSpecialty(null);
-      setFormData({ name: '', active: true });
+      setFormData({ name: '', is_active: true });
     }
     setIsDialogOpen(true);
   };
@@ -85,7 +58,7 @@ export function Specialties() {
       setSpecialties(prev =>
         prev.map(s =>
           s.id === editingSpecialty.id
-            ? { ...s, name: formData.name, active: formData.active }
+            ? { ...s, name: formData.name, is_active: formData.is_active }
             : s
         )
       );
@@ -95,9 +68,9 @@ export function Specialties() {
       });
     } else {
       const newSpecialty: Specialty = {
-        id: Date.now().toString(),
+        id: Date.now(),
         name: formData.name,
-        active: formData.active,
+        is_active: formData.is_active,
       };
       setSpecialties(prev => [...prev, newSpecialty]);
       toast({
@@ -108,7 +81,7 @@ export function Specialties() {
 
     setIsDialogOpen(false);
     setEditingSpecialty(null);
-    setFormData({ name: '', active: true });
+    setFormData({ name: '', is_active: true });
   };
 
   return (
@@ -143,8 +116,8 @@ export function Specialties() {
                   </TableCell>
                   <TableCell className="font-medium">{specialty.name}</TableCell>
                   <TableCell>
-                    <Badge variant={specialty.active ? "default" : "secondary"}>
-                      {specialty.active ? 'Ativo' : 'Inativo'}
+                    <Badge variant={specialty.is_active ? "default" : "secondary"}>
+                      {specialty.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -190,8 +163,8 @@ export function Specialties() {
                 <Label htmlFor="active">Especialidade Ativa</Label>
                 <Switch
                   id="active"
-                  checked={formData.active}
-                  onCheckedChange={(checked) => setFormData({ ...formData, active: checked })}
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
                 />
               </div>
             </div>
