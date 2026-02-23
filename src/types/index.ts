@@ -7,20 +7,35 @@ export type AppointmentStatus =
   | 'completed' 
   | 'absent';
 
-export interface Professional {
-  id: string;
+// Reflete a tabela `specialties`
+export interface Specialty {
+  id: number;
   name: string;
-  specialty: string;
-  crm?: string;
-  cro?: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+// Reflete a tabela `professionals`
+export type ProfessionalArea = 'medico' | 'dentista' | 'exame';
+
+export interface Professional {
+  id: number;
+  full_name: string;
+  area: ProfessionalArea;
+  specialty_id: number;
+  numero_conselho: string;
   email: string;
   phone: string;
-  avatar?: string;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  // campo auxiliar para exibição
+  specialtyName?: string;
 }
 
 // Reflete a tabela `clients`
 export interface Patient {
-  id: string;
+  id: number;
   full_name: string;
   cpf: string;
   birth_date: string;
@@ -36,11 +51,13 @@ export interface Patient {
   state_uf?: string;
   insurance_plan_id?: number;
   is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 // Reflete a tabela `appointments`
 export interface Appointment {
-  id: string;
+  id: string; // uuid
   cliente_nome: string;
   cliente_telefone?: string;
   tipo: string;
@@ -51,10 +68,14 @@ export interface Appointment {
   protocolo?: string;
   confirmado?: boolean;
   confirmado_em?: string;
-  professional_id?: string;
-  professionalName?: string; // nome para exibição
+  professional_id?: number;
   service_id?: number;
+  reminder_24h_sent_at?: string;
+  reminder_2h_sent_at?: string;
+  created_at?: string;
+  updated_at?: string;
   // campos auxiliares para compatibilidade de exibição
+  professionalName?: string;
   date: string;
   time: string;
   healthInsurance?: string;
@@ -80,6 +101,12 @@ export const APPOINTMENT_TYPE_LABELS: Record<string, string> = {
   'exam': 'Exame',
   'return': 'Retorno',
   'procedure': 'Procedimento',
+};
+
+export const AREA_LABELS: Record<ProfessionalArea, string> = {
+  'medico': 'Médico',
+  'dentista': 'Dentista',
+  'exame': 'Exame',
 };
 
 export interface WhatsAppMessage {

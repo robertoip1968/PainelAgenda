@@ -23,7 +23,7 @@ export function Agenda() {
 
   const filteredAppointments = appointmentsList.filter((apt) => {
     const dateMatch = apt.date === format(selectedDate, 'yyyy-MM-dd');
-    const profMatch = selectedProfessional ? apt.professional_id === selectedProfessional : true;
+    const profMatch = selectedProfessional ? String(apt.professional_id) === selectedProfessional : true;
     return dateMatch && profMatch;
   });
 

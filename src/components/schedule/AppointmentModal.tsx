@@ -72,11 +72,11 @@ export function AppointmentModal({
   });
 
   const handlePatientSelect = (patientId: string) => {
-    const patient = patients.find((p) => p.id === patientId);
+    const patient = patients.find((p) => String(p.id) === patientId);
     if (patient) {
       setFormData({
         ...formData,
-        patientId: patient.id,
+        patientId: String(patient.id),
         patientName: patient.full_name,
         birthDate: patient.birth_date,
         sex: patient.sex,
@@ -108,7 +108,7 @@ export function AppointmentModal({
     handleClose();
   };
 
-  const selectedProfessional = professionals.find((p) => p.id === formData.professionalId);
+  const selectedProfessional = professionals.find((p) => String(p.id) === formData.professionalId);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -170,7 +170,7 @@ export function AppointmentModal({
                   </SelectTrigger>
                   <SelectContent>
                     {patients.map((patient) => (
-                      <SelectItem key={patient.id} value={patient.id}>
+                      <SelectItem key={patient.id} value={String(patient.id)}>
                         {patient.full_name}
                       </SelectItem>
                     ))}
@@ -362,8 +362,8 @@ export function AppointmentModal({
                   </SelectTrigger>
                   <SelectContent>
                     {professionals.map((prof) => (
-                      <SelectItem key={prof.id} value={prof.id}>
-                        {prof.name} - {prof.specialty}
+                      <SelectItem key={prof.id} value={String(prof.id)}>
+                        {prof.full_name} - {prof.specialtyName}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -475,12 +475,12 @@ export function AppointmentModal({
                   <div>
                     <span className="text-muted-foreground">Profissional:</span>
                     <p className="font-medium">
-                      {selectedProfessional ? `${selectedProfessional.name}` : '—'}
+                      {selectedProfessional ? `${selectedProfessional.full_name}` : '—'}
                     </p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Especialidade:</span>
-                    <p className="font-medium">{selectedProfessional?.specialty || '—'}</p>
+                    <p className="font-medium">{selectedProfessional?.specialtyName || '—'}</p>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Convênio:</span>

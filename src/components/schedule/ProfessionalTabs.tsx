@@ -24,15 +24,15 @@ export function ProfessionalTabs({ professionals, selectedId, onSelect }: Profes
       {professionals.map((prof) => (
         <button
           key={prof.id}
-          onClick={() => onSelect(prof.id)}
+          onClick={() => onSelect(String(prof.id))}
           className={cn(
             "px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors",
-            selectedId === prof.id
+            selectedId === String(prof.id)
               ? "bg-primary text-primary-foreground"
               : "bg-muted text-muted-foreground hover:bg-muted/80"
           )}
         >
-          {prof.name.split(' ')[0]} {prof.name.split(' ').slice(-1)[0]}
+          {prof.full_name.split(' ')[0]} {prof.full_name.split(' ').slice(-1)[0]}
         </button>
       ))}
     </div>

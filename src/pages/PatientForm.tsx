@@ -65,7 +65,7 @@ export function PatientForm() {
   // Load patient data when editing
   useEffect(() => {
     if (id) {
-      const patient = patients.find((p) => p.id === id);
+      const patient = patients.find((p) => String(p.id) === id);
       if (patient) {
         setFormData({
           name: patient.full_name,
