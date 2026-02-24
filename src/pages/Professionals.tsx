@@ -4,12 +4,16 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { professionals, appointments } from '@/data/mockData';
+import { useProfessionals, useAppointments } from '@/hooks/useApiData';
 import { AREA_LABELS } from '@/types';
-import { Plus, Search, Edit, Calendar, Phone, Mail } from 'lucide-react';
+import { Plus, Search, Edit, Calendar, Phone, Mail, Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 export function Professionals() {
   const [searchTerm, setSearchTerm] = useState('');
+  const { data: professionals = [], isLoading, error } = useProfessionals();
+  const today = format(new Date(), 'yyyy-MM-dd');
+  const { data: appointments = [] } = useAppointments({ date: today });
 
   const filteredProfessionals = professionals.filter((prof) =>
     prof.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -22,10 +26,30 @@ export function Professionals() {
     return { total: profAppointments.length, completed };
   };
 
+  if (isLoading) {
+    return (
+      <MainLayout title="Profissionais" subtitle="Carregando...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout title="Profissionais" subtitle="Erro ao carregar">
+        <div className="text-center py-12 text-destructive">
+          <p>Erro ao carregar profissionais: {(error as Error).message}</p>
+          <p className="text-sm text-muted-foreground mt-2">Verifique se a API backend está rodando.</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout title="Profissionais" subtitle={`${professionals.length} profissionais ativos`}>
       <div className="space-y-4 animate-fade-in">
-        {/* Toolbar */}
         <div className="flex items-center justify-between">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -44,7 +68,6 @@ export function Professionals() {
           </Link>
         </div>
 
-        {/* Cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProfessionals.map((prof) => {
             const stats = getProfessionalStats(prof.id);
@@ -67,12 +90,8 @@ export function Professionals() {
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    <p className="text-sm font-medium text-primary">
-                      {prof.numero_conselho}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {AREA_LABELS[prof.area]}
-                    </p>
+                    <p className="text-sm font-medium text-primary">{prof.numero_conselho}</p>
+                    <p className="text-xs text-muted-foreground">{AREA_LABELS[prof.area]}</p>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Phone className="w-3 h-3" />
                       {prof.phone}
