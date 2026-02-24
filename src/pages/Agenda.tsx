@@ -6,11 +6,11 @@ import { TimeSlotGrid } from '@/components/schedule/TimeSlotGrid';
 import { ProfessionalTabs } from '@/components/schedule/ProfessionalTabs';
 import { AppointmentModal } from '@/components/schedule/AppointmentModal';
 import { Button } from '@/components/ui/button';
-import { appointments as initialAppointments, professionals } from '@/data/mockData';
+import { useProfessionals, useAppointments, useUpdateAppointmentStatus } from '@/hooks/useApiData';
 import { Appointment, AppointmentStatus } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Plus, Search, Printer } from 'lucide-react';
+import { Plus, Search, Printer, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function Agenda() {
@@ -19,13 +19,14 @@ export function Agenda() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState('08:00');
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [appointmentsList, setAppointmentsList] = useState<Appointment[]>(initialAppointments);
 
-  const filteredAppointments = appointmentsList.filter((apt) => {
-    const dateMatch = apt.date === format(selectedDate, 'yyyy-MM-dd');
-    const profMatch = selectedProfessional ? String(apt.professional_id) === selectedProfessional : true;
-    return dateMatch && profMatch;
+  const dateStr = format(selectedDate, 'yyyy-MM-dd');
+  const { data: professionals = [] } = useProfessionals();
+  const { data: allAppointments = [], isLoading } = useAppointments({
+    date: dateStr,
+    ...(selectedProfessional ? { professional_id: Number(selectedProfessional) } : {}),
   });
+  const updateStatus = useUpdateAppointmentStatus();
 
   const handleSlotClick = (time: string, appointment?: Appointment) => {
     setSelectedTime(time);
@@ -36,14 +37,16 @@ export function Agenda() {
   };
 
   const handleStatusChange = (appointmentId: string, newStatus: AppointmentStatus) => {
-    setAppointmentsList(prev => 
-      prev.map(apt => 
-        apt.id === appointmentId ? { ...apt, status: newStatus } : apt
-      )
-    );
-    // Update selected appointment if it's the one being changed
-    setSelectedAppointment(prev => 
-      prev?.id === appointmentId ? { ...prev, status: newStatus } : prev
+    updateStatus.mutate(
+      { id: appointmentId, status: newStatus },
+      {
+        onSuccess: () => {
+          setSelectedAppointment(prev =>
+            prev?.id === appointmentId ? { ...prev, status: newStatus } : prev
+          );
+        },
+        onError: (err) => toast.error(`Erro: ${err.message}`),
+      }
     );
   };
 
@@ -53,14 +56,12 @@ export function Agenda() {
   };
 
   return (
-    <MainLayout 
-      title="Agenda" 
+    <MainLayout
+      title="Agenda"
       subtitle={format(selectedDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
     >
       <div className="flex gap-6 h-full">
-        {/* Main content */}
         <div className="flex-1 space-y-4 animate-fade-in">
-          {/* Toolbar */}
           <div className="flex items-center justify-between">
             <ProfessionalTabs
               professionals={professionals}
@@ -81,14 +82,18 @@ export function Agenda() {
             </div>
           </div>
 
-          {/* Time slots */}
-          <TimeSlotGrid
-            appointments={filteredAppointments}
-            onSlotClick={handleSlotClick}
-            onStatusChange={handleStatusChange}
-          />
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <TimeSlotGrid
+              appointments={allAppointments}
+              onSlotClick={handleSlotClick}
+              onStatusChange={handleStatusChange}
+            />
+          )}
 
-          {/* Selected appointment details */}
           {selectedAppointment && (
             <div className="bg-card rounded-lg border border-border p-4 animate-slide-in">
               <h3 className="font-semibold mb-2">Detalhes do Agendamento</h3>
@@ -114,14 +119,9 @@ export function Agenda() {
           )}
         </div>
 
-        {/* Sidebar */}
         <div className="w-72 space-y-4 flex-shrink-0">
-          <MiniCalendar
-            selectedDate={selectedDate}
-            onDateSelect={setSelectedDate}
-          />
+          <MiniCalendar selectedDate={selectedDate} onDateSelect={setSelectedDate} />
           <StatusLegend />
-
           <div className="bg-card rounded-lg border border-border p-4">
             <h3 className="font-medium text-sm mb-3">Funções Rápidas</h3>
             <div className="space-y-2">

@@ -4,12 +4,15 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { patients } from '@/data/mockData';
-import { Plus, Search, Edit, Trash2, Phone, Mail } from 'lucide-react';
+import { usePatients, useDeletePatient } from '@/hooks/useApiData';
+import { Plus, Search, Edit, Trash2, Phone, Mail, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 export function Patients() {
   const [searchTerm, setSearchTerm] = useState('');
+  const { data: patients = [], isLoading, error } = usePatients();
+  const deletePatient = useDeletePatient();
 
   const filteredPatients = patients.filter((patient) =>
     patient.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -17,10 +20,39 @@ export function Patients() {
     patient.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleDelete = (id: number) => {
+    if (confirm('Tem certeza que deseja excluir este paciente?')) {
+      deletePatient.mutate(id, {
+        onSuccess: () => toast.success('Paciente excluído com sucesso!'),
+        onError: (err) => toast.error(`Erro: ${err.message}`),
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <MainLayout title="Pacientes" subtitle="Carregando...">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout title="Pacientes" subtitle="Erro ao carregar">
+        <div className="text-center py-12 text-destructive">
+          <p>Erro ao carregar pacientes: {(error as Error).message}</p>
+          <p className="text-sm text-muted-foreground mt-2">Verifique se a API backend está rodando.</p>
+        </div>
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout title="Pacientes" subtitle={`${patients.length} pacientes cadastrados`}>
       <div className="space-y-4 animate-fade-in">
-        {/* Toolbar */}
         <div className="flex items-center justify-between">
           <div className="relative w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -39,7 +71,6 @@ export function Patients() {
           </Link>
         </div>
 
-        {/* Table */}
         <div className="bg-card rounded-lg border border-border overflow-hidden">
           <Table>
             <TableHeader>
@@ -98,7 +129,12 @@ export function Patients() {
                           <Edit className="w-4 h-4" />
                         </Button>
                       </Link>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(patient.id)}
+                      >
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
