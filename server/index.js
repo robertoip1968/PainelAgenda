@@ -23,7 +23,7 @@ app.use(express.json());
 const pool = new Pool({
   host: process.env.DB_HOST || 'ia.cursatto.com.br',
   port: parseInt(process.env.DB_PORT || '5432'),
-  user: process.env.DB_USER || 'postgres',
+  user: process.env.DB_USER || 'painelagenda_api',
   password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'painelagenda',
   max: 20,
