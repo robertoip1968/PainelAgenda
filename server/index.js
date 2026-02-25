@@ -40,7 +40,7 @@ app.use('/api', async (req, res, next) => {
   try {
     // Busca o schema_name do tenant na tabela pública
     const result = await pool.query(
-      'SELECT schema_name FROM public.tenants WHERE slug = $1 AND active = true',
+      'SELECT schema_name FROM public.tenants WHERE slug = $1',
       [slug]
     );
 
