@@ -40,7 +40,7 @@ app.use('/api', async (req, res, next) => {
   try {
     // Busca o schema_name do tenant na tabela pública
     const result = await pool.query(
-      'SELECT schema_name FROM public.tenants WHERE slug = $1',
+      'SELECT schema_name FROM public.tenants WHERE slug = $1 AND active = true',
       [slug]
     );
 
@@ -75,7 +75,7 @@ app.get('/api/tenant', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT slug, schema_name, primary_domain FROM public.tenants WHERE slug = $1',
+      'SELECT slug, schema_name, primary_domain FROM public.tenants WHERE slug = $1 AND active = true',
       [slug]
     );
     if (result.rows.length === 0) return res.status(404).json({ error: 'Tenant não encontrado' });
