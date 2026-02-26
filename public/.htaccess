@@ -1,0 +1,13 @@
+RewriteEngine On
+
+# ─── Proxy: /api/* → Node.js backend (porta 3000) ───
+RewriteCond %{REQUEST_URI} ^/api/(.*)$ [NC]
+RewriteRule ^api/(.*)$ http://127.0.0.1:3000/api/$1 [P,L]
+
+# Passa o hostname original para o backend
+RequestHeader set X-Forwarded-Host "%{HTTP_HOST}e"
+
+# ─── SPA Fallback: tudo que não é arquivo → index.html ───
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
