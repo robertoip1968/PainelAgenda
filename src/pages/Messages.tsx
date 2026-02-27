@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '@/components/ui/select';
 import {
   Table,
@@ -24,93 +24,35 @@ import { CalendarIcon, Search, Filter, ArrowUpRight, ArrowDownLeft, X } from 'lu
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { WhatsAppMessage } from '@/types';
+import { useMessages } from '@/hooks/useApiData';
 
-// Mock data for demonstration
-const mockMessages: WhatsAppMessage[] = [
-  {
-    id: '1',
-    phone: '(11) 99999-1234',
-    client: 'Maria Silva',
-    direction: 'received',
-    text: 'Olá, gostaria de agendar uma consulta para amanhã.',
-    intent: 'Agendamento',
-    dateTime: new Date('2025-01-14T10:30:00'),
-  },
-  {
-    id: '2',
-    phone: '(11) 99999-1234',
-    client: 'Maria Silva',
-    direction: 'sent',
-    text: 'Olá Maria! Temos horários disponíveis às 9h e às 14h. Qual prefere?',
-    intent: 'Resposta',
-    dateTime: new Date('2025-01-14T10:32:00'),
-  },
-  {
-    id: '3',
-    phone: '(11) 98888-5678',
-    client: 'João Santos',
-    direction: 'received',
-    text: 'Preciso remarcar minha consulta de quinta-feira.',
-    intent: 'Remarcação',
-    dateTime: new Date('2025-01-14T09:15:00'),
-  },
-  {
-    id: '4',
-    phone: '(11) 97777-9012',
-    client: 'Ana Oliveira',
-    direction: 'received',
-    text: 'Qual o valor da consulta particular?',
-    intent: 'Informação',
-    dateTime: new Date('2025-01-13T16:45:00'),
-  },
-  {
-    id: '5',
-    phone: '(11) 97777-9012',
-    client: 'Ana Oliveira',
-    direction: 'sent',
-    text: 'Olá Ana! A consulta particular custa R$ 250,00. Deseja agendar?',
-    intent: 'Resposta',
-    dateTime: new Date('2025-01-13T16:50:00'),
-  },
-  {
-    id: '6',
-    phone: '(11) 96666-3456',
-    client: 'Carlos Ferreira',
-    direction: 'received',
-    text: 'Preciso cancelar minha consulta de hoje.',
-    intent: 'Cancelamento',
-    dateTime: new Date('2025-01-13T08:00:00'),
-  },
-  {
-    id: '7',
-    phone: '(11) 95555-7890',
-    client: 'Fernanda Costa',
-    direction: 'received',
-    text: 'Vocês aceitam convênio Unimed?',
-    intent: 'Informação',
-    dateTime: new Date('2025-01-12T14:20:00'),
-  },
-  {
-    id: '8',
-    phone: '(11) 95555-7890',
-    client: 'Fernanda Costa',
-    direction: 'sent',
-    text: 'Sim, aceitamos Unimed! Posso agendar sua consulta?',
-    intent: 'Resposta',
-    dateTime: new Date('2025-01-12T14:25:00'),
-  },
-];
+function formatPhoneBr(value: string) {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  const n = digits.startsWith('55') ? digits.slice(2) : digits;
+  if (n.length === 11) return `(${n.slice(0, 2)}) ${n.slice(2, 7)}-${n.slice(7)}`;
+  if (n.length === 10) return `(${n.slice(0, 2)}) ${n.slice(2, 6)}-${n.slice(6)}`;
+  return value;
+}
 
 const intents = ['Todos', 'Agendamento', 'Remarcação', 'Cancelamento', 'Informação', 'Resposta', 'Confirmação'];
 
 export function Messages() {
-  const [messages] = useState<WhatsAppMessage[]>(mockMessages);
   const [phoneFilter, setPhoneFilter] = useState('');
   const [clientFilter, setClientFilter] = useState('');
   const [directionFilter, setDirectionFilter] = useState<string>('all');
   const [intentFilter, setIntentFilter] = useState<string>('Todos');
   const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+
+  const dateParam = dateFilter ? format(dateFilter, 'yyyy-MM-dd') : undefined;
+
+  const { data: messages = [], isLoading, error } = useMessages({
+    phone: phoneFilter ? phoneFilter.replace(/\D/g, '') : undefined,
+    client: clientFilter || undefined,
+    direction: directionFilter as 'all' | 'received' | 'sent',
+    intent: intentFilter !== 'Todos' ? intentFilter : undefined,
+    date: dateParam,
+    limit: 500,
+  });
 
   const clearFilters = () => {
     setPhoneFilter('');
@@ -120,30 +62,14 @@ export function Messages() {
     setDateFilter(undefined);
   };
 
-  const hasActiveFilters = phoneFilter || clientFilter || directionFilter !== 'all' || intentFilter !== 'Todos' || dateFilter;
+  const hasActiveFilters =
+    phoneFilter ||
+    clientFilter ||
+    directionFilter !== 'all' ||
+    intentFilter !== 'Todos' ||
+    dateFilter;
 
-  const filteredMessages = messages.filter((msg) => {
-    if (phoneFilter && !msg.phone.toLowerCase().includes(phoneFilter.toLowerCase())) {
-      return false;
-    }
-    if (clientFilter && !msg.client.toLowerCase().includes(clientFilter.toLowerCase())) {
-      return false;
-    }
-    if (directionFilter !== 'all' && msg.direction !== directionFilter) {
-      return false;
-    }
-    if (intentFilter !== 'Todos' && msg.intent !== intentFilter) {
-      return false;
-    }
-    if (dateFilter) {
-      const msgDate = format(msg.dateTime, 'yyyy-MM-dd');
-      const filterDate = format(dateFilter, 'yyyy-MM-dd');
-      if (msgDate !== filterDate) {
-        return false;
-      }
-    }
-    return true;
-  });
+  const filteredMessages = messages;
 
   return (
     <MainLayout title="Mensagens" subtitle="Gerencie as mensagens recebidas pelo WhatsApp">
@@ -154,9 +80,9 @@ export function Messages() {
             <Filter className="w-4 h-4" />
             Filtros
             {hasActiveFilters && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={clearFilters}
                 className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
               >
@@ -165,7 +91,7 @@ export function Messages() {
               </Button>
             )}
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Telefone</label>
@@ -230,12 +156,12 @@ export function Messages() {
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dateFilter && "text-muted-foreground"
+                      'w-full justify-start text-left font-normal',
+                      !dateFilter && 'text-muted-foreground'
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFilter ? format(dateFilter, "dd/MM/yyyy", { locale: ptBR }) : "Selecionar data"}
+                    {dateFilter ? format(dateFilter, 'dd/MM/yyyy', { locale: ptBR }) : 'Selecionar data'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -267,7 +193,19 @@ export function Messages() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredMessages.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                    Carregando mensagens...
+                  </TableCell>
+                </TableRow>
+              ) : error ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-32 text-center text-destructive">
+                    Erro ao carregar mensagens: {(error as Error).message}
+                  </TableCell>
+                </TableRow>
+              ) : filteredMessages.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
                     Nenhuma mensagem encontrada.
@@ -276,21 +214,17 @@ export function Messages() {
               ) : (
                 filteredMessages.map((message) => (
                   <TableRow key={message.id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      #{message.id}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {message.phone}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">#{message.id}</TableCell>
+                    <TableCell className="font-medium">{formatPhoneBr(message.phone)}</TableCell>
                     <TableCell>{message.client}</TableCell>
                     <TableCell>
                       <Badge
                         variant={message.direction === 'received' ? 'default' : 'secondary'}
                         className={cn(
-                          "gap-1",
-                          message.direction === 'received' 
-                            ? "bg-green-100 text-green-700 hover:bg-green-100" 
-                            : "bg-blue-100 text-blue-700 hover:bg-blue-100"
+                          'gap-1',
+                          message.direction === 'received'
+                            ? 'bg-green-100 text-green-700 hover:bg-green-100'
+                            : 'bg-blue-100 text-blue-700 hover:bg-blue-100'
                         )}
                       >
                         {message.direction === 'received' ? (
@@ -308,7 +242,7 @@ export function Messages() {
                       <Badge variant="outline">{message.intent}</Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {format(message.dateTime, "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      {format(message.dateTime, 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                     </TableCell>
                   </TableRow>
                 ))

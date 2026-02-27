@@ -6,6 +6,7 @@ import {
   specialtiesApi,
   healthInsurancesApi,
   dashboardApi,
+  messagesApi,
 } from '@/services/api';
 import { Professional, Patient, Appointment, Specialty, HealthInsurance } from '@/types';
 
@@ -109,4 +110,20 @@ export function useSaveHealthInsurance() {
 // ─── Dashboard ──────────────────────────────────────
 export function useDashboardStats() {
   return useQuery({ queryKey: ['dashboard-stats'], queryFn: dashboardApi.stats });
+}
+
+// ─── Mensagens (WhatsApp) ─────────────────────────
+export function useMessages(params?: {
+  phone?: string;
+  client?: string;
+  direction?: 'all' | 'received' | 'sent';
+  intent?: string;
+  date?: string; // YYYY-MM-DD
+  limit?: number;
+  offset?: number;
+}) {
+  return useQuery({
+    queryKey: ['messages', params],
+    queryFn: () => messagesApi.list(params),
+  });
 }

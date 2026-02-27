@@ -227,6 +227,77 @@ app.delete('/api/patients/:id', async (req, res) => {
   }
 });
 
+// ─── Mensagens (historico_chat) ─────────────────────
+app.get('/api/messages', async (req, res) => {
+  try {
+    const phone = String(req.query.phone ?? '').trim();
+    const client = String(req.query.client ?? '').trim();
+    const direction = String(req.query.direction ?? '').trim(); // received | sent | ''
+    const intent = String(req.query.intent ?? '').trim();
+    const date = String(req.query.date ?? '').trim(); // YYYY-MM-DD
+
+    const limit = Math.min(parseInt(String(req.query.limit ?? '200'), 10) || 200, 1000);
+    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+
+    let sql = `
+      SELECT
+        id::text AS id,
+        telefone_cliente AS phone,
+        nome_cliente AS client,
+        CASE
+          WHEN lower(direcao) IN ('recebida','received','in','entrada','incoming') THEN 'received'
+          WHEN lower(direcao) IN ('enviada','sent','out','saida','outgoing') THEN 'sent'
+          ELSE lower(direcao)
+        END AS direction,
+        mensagem AS text,
+        COALESCE(intencao, '') AS intent,
+        datahora AS "dateTime"
+      FROM historico_chat
+      WHERE 1=1
+    `;
+
+    const params = [];
+
+    if (phone) {
+      params.push(`%${phone}%`);
+      sql += ` AND telefone_cliente ILIKE $${params.length}`;
+    }
+
+    if (client) {
+      params.push(`%${client}%`);
+      sql += ` AND nome_cliente ILIKE $${params.length}`;
+    }
+
+    if (direction === 'received') {
+      sql += ` AND lower(direcao) IN ('recebida','received','in','entrada','incoming')`;
+    } else if (direction === 'sent') {
+      sql += ` AND lower(direcao) IN ('enviada','sent','out','saida','outgoing')`;
+    }
+
+    if (intent) {
+      params.push(intent);
+      sql += ` AND COALESCE(intencao,'') ILIKE $${params.length}`;
+    }
+
+    if (date) {
+      params.push(date);
+      sql += ` AND datahora::date = $${params.length}::date`;
+    }
+
+    params.push(limit);
+    sql += ` ORDER BY datahora DESC LIMIT $${params.length}`;
+
+    params.push(offset);
+    sql += ` OFFSET $${params.length}`;
+
+    const result = await tenantQuery(req.schemaName, sql, params);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ═══════════════════════════════════════════════════
 // AGENDAMENTOS
 // ═══════════════════════════════════════════════════

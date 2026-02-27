@@ -1,4 +1,4 @@
-import { Professional, Patient, Appointment, Specialty, HealthInsurance } from '@/types';
+import { Professional, Patient, Appointment, Specialty, HealthInsurance, WhatsAppMessage } from '@/types';
 
 /**
  * Base URL da API backend.
@@ -9,7 +9,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
-  
+
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
@@ -100,5 +100,39 @@ export const healthInsurancesApi = {
 
 // ─── Dashboard ──────────────────────────────────────
 export const dashboardApi = {
-  stats: () => request<{ appointments_today: number; patients_total: number; professionals_active: number; avg_wait_time: string }>('/dashboard/stats'),
+  stats: () =>
+    request<{ appointments_today: number; patients_total: number; professionals_active: number; avg_wait_time: string }>(
+      '/dashboard/stats'
+    ),
+};
+
+// ─── Mensagens (WhatsApp) ─────────────────────────
+type MessagesParams = {
+  phone?: string;
+  client?: string;
+  direction?: 'all' | 'received' | 'sent';
+  intent?: string;
+  date?: string; // YYYY-MM-DD
+  limit?: number;
+  offset?: number;
+};
+
+type WhatsAppMessageDTO = Omit<WhatsAppMessage, 'dateTime'> & { dateTime: string };
+
+export const messagesApi = {
+  list: (params?: MessagesParams) => {
+    const query = new URLSearchParams();
+    if (params?.phone) query.set('phone', params.phone);
+    if (params?.client) query.set('client', params.client);
+    if (params?.direction && params.direction !== 'all') query.set('direction', params.direction);
+    if (params?.intent && params.intent !== 'Todos') query.set('intent', params.intent);
+    if (params?.date) query.set('date', params.date);
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.offset) query.set('offset', String(params.offset));
+
+    const qs = query.toString();
+    return request<WhatsAppMessageDTO[]>(`/messages${qs ? `?${qs}` : ''}`).then(
+      (rows) => rows.map((r) => ({ ...r, dateTime: new Date(r.dateTime) })) as WhatsAppMessage[]
+    );
+  },
 };
