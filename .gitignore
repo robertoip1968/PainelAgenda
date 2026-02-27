@@ -29,3 +29,14 @@ dist-ssr
 *.swp
 *~
 server/*.bak*
+
+# secrets
+.env
+server/.env
+
+# pm2 local configs (se tiver segredos)
+server/ecosystem.config.js
+
+# node artifacts
+node_modules/
+server/node_modules/
