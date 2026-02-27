@@ -71,3 +71,14 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
+## Rodar o Deploy e o healthcheck
+
+  /home/painelagendacom/deploy_painelagenda.sh
+  /home/painelagendacom/healthcheck_painelagenda.sh
+
+## Fazer Rollback
+
+  rm -rf /home/painelagendacom/public_html
+  mv /home/painelagendacom/public_html.prev /home/painelagendacom/public_html
+  pm2 restart painelagenda-api
