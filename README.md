@@ -74,11 +74,11 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/c
 
 ## Rodar o Deploy e o healthcheck
 
-  /home/painelagendacom/deploy_painelagenda.sh
-  /home/painelagendacom/healthcheck_painelagenda.sh
+    /home/painelagendacom/deploy_painelagenda.sh
+    /home/painelagendacom/healthcheck_painelagenda.sh
 
 ## Fazer Rollback
 
-  rm -rf /home/painelagendacom/public_html
-  mv /home/painelagendacom/public_html.prev /home/painelagendacom/public_html
-  pm2 restart painelagenda-api
+    rm -rf /home/painelagendacom/public_html
+    mv /home/painelagendacom/public_html.prev /home/painelagendacom/public_html
+    pm2 restart painelagenda-api
