@@ -59,14 +59,24 @@ app.use('/api', async (req, res, next) => {
 // Helper: executa query dentro do schema do tenant
 async function tenantQuery(schemaName, text, params = []) {
   const client = await pool.connect();
+
+  // Sanitiza o schema e coloca entre aspas para evitar problemas
+  const safeSchema = String(schemaName).replace(/"/g, '""');
+
   try {
-    await client.query(`SET LOCAL search_path = ${schemaName}, public`);
+    await client.query('BEGIN');
+    await client.query(`SET LOCAL search_path TO "${safeSchema}", public`);
     const result = await client.query(text, params);
+    await client.query('COMMIT');
     return result;
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch (_) {}
+    throw err;
   } finally {
     client.release();
   }
 }
+
 
 // ─── Endpoint: Tenant info ──────────────────────────
 app.get('/api/tenant', async (req, res) => {
