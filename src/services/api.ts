@@ -10,14 +10,29 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
 
+  const token = localStorage.getItem('pa_token');
+
   const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
       'X-Tenant-Slug': getTenantSlug(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
     ...options,
   });
+
+  // Se a API devolver 401, derruba sessão e volta pro login
+  if (res.status === 401) {
+    const endpointIsAuthLogin = endpoint.startsWith('/auth/login');
+    if (!endpointIsAuthLogin) {
+      localStorage.removeItem('pa_token');
+      localStorage.removeItem('pa_user');
+      if (window.location.pathname !== '/auth') {
+        window.location.href = '/auth';
+      }
+    }
+  }
 
   if (!res.ok) {
     const errorBody = await res.text();
@@ -135,4 +150,27 @@ export const messagesApi = {
       (rows) => rows.map((r) => ({ ...r, dateTime: new Date(r.dateTime) })) as WhatsAppMessage[]
     );
   },
+};
+
+// ─── Auth ─────────────────────────────────────────────
+export type AuthUser = {
+  id: string;
+  nome: string;
+  username: string;
+  email: string;
+  nivel: number;
+  ativo: boolean;
+  celular?: string;
+  last_login_at?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    request<{ token: string; user: AuthUser }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    }),
+  me: () => request<AuthUser>('/auth/me'),
 };
