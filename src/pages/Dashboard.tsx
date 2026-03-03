@@ -12,37 +12,8 @@ import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { AppointmentStatus } from '@/types';
 import dashboardBanner from '@/assets/dashboard-banner.png';
-
-const stats = [
-  {
-    title: 'Agendamentos Hoje',
-    value: appointments.length,
-    icon: Calendar,
-    trend: '+12%',
-    trendUp: true,
-  },
-  {
-    title: 'Pacientes Cadastrados',
-    value: patients.length,
-    icon: Users,
-    trend: '+5%',
-    trendUp: true,
-  },
-  {
-    title: 'Profissionais Ativos',
-    value: professionals.length,
-    icon: UserCog,
-    trend: '0%',
-    trendUp: true,
-  },
-  {
-    title: 'Tempo Médio de Espera',
-    value: '15min',
-    icon: Clock,
-    trend: '-8%',
-    trendUp: true,
-  },
-];
+import { useDashboardStats } from '@/hooks/useApiData';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const chartData = [
   { name: 'Contatos', value: 45, color: '#3B82F6' },
@@ -112,28 +83,44 @@ const getMockDataForCategory = (category: string) => {
     'No-show': 'absent',
   };
 
-  return baseData.map((item, index) => ({
-    ...item,
-    id: `${category}-${index}`,
-    status: statusMap[category] || item.status,
-  })).slice(0, chartData.find(c => c.name === category)?.value ? Math.min(5, chartData.find(c => c.name === category)!.value) : 0);
+  return baseData
+    .map((item, index) => ({
+      ...item,
+      id: `${category}-${index}`,
+      status: statusMap[category] || item.status,
+    }))
+    .slice(
+      0,
+      chartData.find((c) => c.name === category)?.value
+        ? Math.min(5, chartData.find((c) => c.name === category)!.value)
+        : 0
+    );
 };
 
 export function Dashboard() {
   const [weekFilter, setWeekFilter] = useState('current');
   const [dateFilter, setDateFilter] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  
+
+  const { data: dashStats, isLoading: statsLoading } = useDashboardStats();
+
+  // Esses ainda estão fake (vamos migrar depois)
   const todayAppointments = appointments.slice(0, 5);
   const pendingConfirmations = appointments.filter((a) => a.status === 'waiting');
 
   const getWeekLabel = () => {
     const now = new Date();
     if (weekFilter === 'current') {
-      return `${format(startOfWeek(now, { weekStartsOn: 1 }), 'dd/MM')} - ${format(endOfWeek(now, { weekStartsOn: 1 }), 'dd/MM')}`;
+      return `${format(startOfWeek(now, { weekStartsOn: 1 }), 'dd/MM')} - ${format(
+        endOfWeek(now, { weekStartsOn: 1 }),
+        'dd/MM'
+      )}`;
     } else if (weekFilter === 'last') {
       const lastWeek = subWeeks(now, 1);
-      return `${format(startOfWeek(lastWeek, { weekStartsOn: 1 }), 'dd/MM')} - ${format(endOfWeek(lastWeek, { weekStartsOn: 1 }), 'dd/MM')}`;
+      return `${format(startOfWeek(lastWeek, { weekStartsOn: 1 }), 'dd/MM')} - ${format(
+        endOfWeek(lastWeek, { weekStartsOn: 1 }),
+        'dd/MM'
+      )}`;
     }
     return '';
   };
@@ -144,19 +131,59 @@ export function Dashboard() {
 
   const tableData = selectedCategory ? getMockDataForCategory(selectedCategory) : [];
 
+  const stats = [
+    {
+      title: 'Agendamentos Hoje',
+      value: statsLoading ? (
+        <Skeleton className="h-9 w-16 mt-2" />
+      ) : (
+        dashStats?.appointments_today ?? 0
+      ),
+      icon: Calendar,
+      trend: '+12%',
+      trendUp: true,
+    },
+    {
+      title: 'Pacientes Cadastrados',
+      value: statsLoading ? (
+        <Skeleton className="h-9 w-16 mt-2" />
+      ) : (
+        dashStats?.patients_total ?? 0
+      ),
+      icon: Users,
+      trend: '+5%',
+      trendUp: true,
+    },
+    {
+      title: 'Profissionais Ativos',
+      value: statsLoading ? (
+        <Skeleton className="h-9 w-16 mt-2" />
+      ) : (
+        dashStats?.professionals_active ?? 0
+      ),
+      icon: UserCog,
+      trend: '0%',
+      trendUp: true,
+    },
+    {
+      title: 'Tempo Médio de Espera',
+      value: statsLoading ? (
+        <Skeleton className="h-9 w-20 mt-2" />
+      ) : (
+        dashStats?.avg_wait_time ?? '—'
+      ),
+      icon: Clock,
+      trend: '-8%',
+      trendUp: true,
+    },
+  ];
+
   return (
-    <MainLayout 
-      title="Dashboard" 
-      subtitle={format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-    >
+    <MainLayout title="Dashboard" subtitle={format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}>
       <div className="space-y-6 animate-fade-in">
         {/* Banner */}
         <div className="w-full h-48 rounded-xl overflow-hidden">
-          <img 
-            src={dashboardBanner} 
-            alt="Recepção da clínica" 
-            className="w-full h-full object-cover"
-          />
+          <img src={dashboardBanner} alt="Recepção da clínica" className="w-full h-full object-cover" />
         </div>
 
         {/* Stats Grid */}
@@ -185,6 +212,7 @@ export function Dashboard() {
           ))}
         </div>
 
+        {/* resto do dashboard permanece fake por enquanto */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Donut Chart */}
           <Card className="lg:col-span-2">
@@ -225,25 +253,25 @@ export function Dashboard() {
                         cursor="pointer"
                       >
                         {chartData.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
+                          <Cell
+                            key={`cell-${index}`}
                             fill={entry.color}
                             stroke={selectedCategory === entry.name ? 'hsl(var(--foreground))' : 'none'}
                             strokeWidth={selectedCategory === entry.name ? 3 : 0}
                           />
                         ))}
                       </Pie>
-                      <Tooltip 
+                      <Tooltip
                         formatter={(value: number) => [`${value}`, '']}
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))', 
+                        contentStyle={{
+                          backgroundColor: 'hsl(var(--card))',
                           border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px'
+                          borderRadius: '8px',
                         }}
                       />
-                      <Legend 
-                        layout="vertical" 
-                        align="right" 
+                      <Legend
+                        layout="vertical"
+                        align="right"
                         verticalAlign="middle"
                         formatter={(value) => <span className="text-sm text-foreground">{value}</span>}
                       />
@@ -268,9 +296,7 @@ export function Dashboard() {
             <CardContent>
               <div className="space-y-3">
                 {pendingConfirmations.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum agendamento pendente
-                  </p>
+                  <p className="text-sm text-muted-foreground text-center py-4">Nenhum agendamento pendente</p>
                 ) : (
                   pendingConfirmations.map((apt) => (
                     <div
@@ -289,13 +315,8 @@ export function Dashboard() {
           </Card>
         </div>
 
-        {/* Chart Detail Table */}
-        <ChartDetailTable 
-          selectedCategory={selectedCategory} 
-          data={tableData} 
-        />
+        <ChartDetailTable selectedCategory={selectedCategory} data={tableData} />
 
-        {/* Today's Appointments */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg font-semibold">Próximos Atendimentos</CardTitle>
@@ -315,7 +336,7 @@ export function Dashboard() {
                       <p className="text-lg font-bold text-primary">{apt.time}</p>
                     </div>
                     <div>
-                       <p className="font-medium">{apt.cliente_nome}</p>
+                      <p className="font-medium">{apt.cliente_nome}</p>
                       <p className="text-sm text-muted-foreground">{apt.professionalName}</p>
                     </div>
                   </div>

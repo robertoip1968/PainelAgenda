@@ -664,21 +664,90 @@ app.put('/api/health-insurances/:id', async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════
+
+// Converte minutos (float) para label "15min" ou "—"
+function minutesToLabel(minutes) {
+  if (minutes === null || minutes === undefined) return '—';
+  const m = Math.round(Number(minutes));
+  if (!Number.isFinite(m) || m <= 0) return '—';
+  return `${m}min`;
+}
+
+// Calcula "Tempo Médio de Espera" de forma resiliente:
+// - Se existir coluna de fila/início real, usa ela
+// - Senão, usa duração média (fim - inicio) como fallback (melhor que fixo)
+async function computeAvgWaitMinutes(schemaName) {
+  // Descobrir colunas existentes em appointments
+  const colsRes = await tenantQuery(
+    schemaName,
+    `
+    SELECT column_name
+    FROM information_schema.columns
+    WHERE table_schema = $1 AND table_name = 'appointments'
+    `,
+    [schemaName]
+  );
+
+  const cols = new Set(colsRes.rows.map(r => String(r.column_name)));
+
+  // Tentativas (só colunas "permitidas" pra evitar query quebrar)
+  // 1) checkin_at -> started_at (ou variações)
+  const startCandidates = ['checkin_at', 'fila_entrada_at', 'queue_at'];
+  const endCandidates = ['started_at', 'start_at', 'inicio_real', 'inicio_atendimento', 'in_progress_at'];
+
+  let waitStartCol = startCandidates.find(c => cols.has(c));
+  let waitEndCol = endCandidates.find(c => cols.has(c));
+
+  // Se encontrou par de colunas, calcula média de (end - start) em minutos (hoje)
+  if (waitStartCol && waitEndCol) {
+    const q = `
+      SELECT AVG(EXTRACT(EPOCH FROM (${waitEndCol} - ${waitStartCol})) / 60.0) AS minutes
+      FROM appointments
+      WHERE ${waitStartCol} IS NOT NULL
+        AND ${waitEndCol} IS NOT NULL
+        AND ${waitStartCol}::date = CURRENT_DATE
+    `;
+    const r = await tenantQuery(schemaName, q);
+    return r.rows?.[0]?.minutes ?? null;
+  }
+
+  // 2) Fallback: duração média (fim - inicio) para atendimentos concluídos/andamento (hoje)
+  // (Se você depois criar colunas de check-in/início real, automaticamente vai usar a regra 1)
+  if (cols.has('fim') && cols.has('inicio')) {
+    const q = `
+      SELECT AVG(EXTRACT(EPOCH FROM (fim - inicio)) / 60.0) AS minutes
+      FROM appointments
+      WHERE inicio::date = CURRENT_DATE
+        AND fim IS NOT NULL
+        AND inicio IS NOT NULL
+        AND status IN ('completed','in-progress')
+    `;
+    const r = await tenantQuery(schemaName, q);
+    return r.rows?.[0]?.minutes ?? null;
+  }
+
+  return null;
+}
+
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
-    const today = new Date().toISOString().slice(0, 10);
-
-    const [appointmentsToday, patientsTotal, professionalsActive] = await Promise.all([
-      tenantQuery(req.schemaName, 'SELECT COUNT(*) as count FROM appointments WHERE DATE(inicio) = $1', [today]),
-      tenantQuery(req.schemaName, 'SELECT COUNT(*) as count FROM clients WHERE is_active = true'),
-      tenantQuery(req.schemaName, 'SELECT COUNT(*) as count FROM professionals WHERE is_active = true'),
+    const [appts, pats, profs, avgMin] = await Promise.all([
+      tenantQuery(req.schemaName, "SELECT COUNT(*)::int as count FROM appointments WHERE inicio::date = CURRENT_DATE"),
+      tenantQuery(req.schemaName, "SELECT COUNT(*)::int as count FROM clients WHERE is_active = true"),
+      tenantQuery(req.schemaName, "SELECT COUNT(*)::int as count FROM professionals WHERE is_active = true"),
+      computeAvgWaitMinutes(req.schemaName),
     ]);
 
     res.json({
-      appointments_today: parseInt(appointmentsToday.rows[0].count, 10),
-      patients_total: parseInt(patientsTotal.rows[0].count, 10),
-      professionals_active: parseInt(professionalsActive.rows[0].count, 10),
-      avg_wait_time: '15min',
+      appointments_today: appts.rows[0].count,
+      patients_total: pats.rows[0].count,
+      professionals_active: profs.rows[0].count,
+      avg_wait_time: minutesToLabel(avgMin),
+      // opcional (útil pro futuro):
+      avg_wait_time_minutes: avgMin === null ? null : Number(avgMin),
     });
   } catch (err) {
     console.error(err);
