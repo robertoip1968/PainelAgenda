@@ -33,33 +33,92 @@ const pool = new Pool({
   idleTimeoutMillis: 30000,
 });
 
+// ─── Tenant cache + proteção contra "tempestade" ─────────────────────────
+const TENANT_CACHE_TTL_MS = 60_000; // 1 min (ajuste se quiser)
+const tenantCache = new Map(); // slug -> { slug, schema_name, primary_domain, expiresAt }
+
+let tenantFailUntil = 0; // circuit breaker: se der erro no DB, pausa tentativas por X ms
+let tenantErrLastLog = 0;
+let tenantErrSuppressed = 0;
+
+function logTenantErrorThrottled(err) {
+  const now = Date.now();
+  // loga no máximo 1x a cada 5s
+  if (now - tenantErrLastLog > 5000) {
+    const suppressed = tenantErrSuppressed;
+    tenantErrSuppressed = 0;
+    tenantErrLastLog = now;
+
+    console.error('Erro ao resolver tenant:', err?.message || err);
+    if (suppressed > 0) console.error(`(suprimidos ${suppressed} erros iguais nos últimos 5s)`);
+  } else {
+    tenantErrSuppressed++;
+  }
+}
+
+async function resolveTenant(slug) {
+  const now = Date.now();
+
+  // breaker ativo: não martela o banco
+  if (now < tenantFailUntil) {
+    const e = new Error('Tenant resolver em backoff (DB instável/erro de credencial).');
+    e.code = 'TENANT_BACKOFF';
+    throw e;
+  }
+
+  const cached = tenantCache.get(slug);
+  if (cached && cached.expiresAt > now) return cached;
+
+  const result = await pool.query(
+    `SELECT slug, schema_name, primary_domain
+       FROM public.tenants
+      WHERE slug = $1 AND active = true
+      LIMIT 1`,
+    [slug]
+  );
+
+  if (result.rows.length === 0) return null;
+
+  const row = result.rows[0];
+  const value = {
+    slug: row.slug,
+    schema_name: row.schema_name,
+    primary_domain: row.primary_domain,
+    expiresAt: now + TENANT_CACHE_TTL_MS,
+  };
+
+  tenantCache.set(slug, value);
+  return value;
+}
+
+
 // ─── Auth (JWT) ─────────────────────────────────────────
 const JWT_SECRET = process.env.JWT_SECRET || 'CHANGE_ME_NOW';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '12h';
 
 // ─── Middleware: resolver tenant e setar schema ────────
 app.use('/api', async (req, res, next) => {
-  const slug = req.headers['x-tenant-slug'];
-  if (!slug) {
-    return res.status(400).json({ error: 'Header X-Tenant-Slug é obrigatório' });
-  }
-
   try {
-    // Busca o schema_name do tenant na tabela pública
-    const result = await pool.query(
-      'SELECT schema_name FROM public.tenants WHERE slug = $1 AND active = true',
-      [slug]
-    );
+    const tenantSlug = req.headers['x-tenant-slug'];
+    if (!tenantSlug) return res.status(400).json({ error: 'X-Tenant-Slug ausente' });
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Tenant não encontrado' });
-    }
+    const tenant = await resolveTenant(String(tenantSlug));
+    if (!tenant) return res.status(404).json({ error: 'Tenant não encontrado ou inativo' });
 
-    req.schemaName = result.rows[0].schema_name;
+    req.tenantSlug = tenant.slug;
+    req.schemaName = tenant.schema_name;
+
     next();
   } catch (err) {
-    console.error('Erro ao resolver tenant:', err);
-    res.status(500).json({ error: 'Erro interno ao resolver tenant' });
+    // Se DB falhar, entra em backoff por 15s (evita "derrubar" a VPS)
+    if (err?.code === 'TENANT_BACKOFF') {
+      return res.status(503).json({ error: 'Resolver de tenant temporariamente indisponível. Tente novamente.' });
+    }
+
+    tenantFailUntil = Date.now() + 15_000;
+    logTenantErrorThrottled(err);
+
+    return res.status(500).json({ error: 'Erro interno ao resolver tenant' });
   }
 });
 
@@ -126,19 +185,20 @@ app.get('/api/tenant', async (req, res) => {
     const slug = req.headers['x-tenant-slug'];
     if (!slug) return res.status(400).json({ error: 'Slug ausente' });
 
-    const result = await pool.query(
-      `SELECT slug, schema_name, primary_domain
-       FROM public.tenants
-       WHERE slug = $1 AND active = true
-       LIMIT 1`,
-      [slug]
-    );
+    const tenant = await resolveTenant(String(slug));
+    if (!tenant) return res.status(404).json({ error: 'Tenant não encontrado' });
 
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Tenant não encontrado' });
-
-    res.json(result.rows[0]);
+    res.json({
+      slug: tenant.slug,
+      schema_name: tenant.schema_name,
+      primary_domain: tenant.primary_domain,
+    });
   } catch (err) {
-    console.error(err);
+    if (err?.code === 'TENANT_BACKOFF') {
+      return res.status(503).json({ error: 'Temporariamente indisponível' });
+    }
+    tenantFailUntil = Date.now() + 15_000;
+    logTenantErrorThrottled(err);
     res.status(500).json({ error: 'Erro interno' });
   }
 });

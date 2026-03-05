@@ -40,3 +40,4 @@ server/ecosystem.config.js
 # node artifacts
 node_modules/
 server/node_modules/
+ecosystem.config.js
