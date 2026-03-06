@@ -22,6 +22,41 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Funcao de mapeamento do status de atendimento
+
+function mapStatusToDb(input) {
+  const v = String(input ?? '').toLowerCase();
+
+  // DB (permitidos)
+  if (['scheduled', 'canceled', 'rescheduled', 'done', 'no_show'].includes(v)) return v;
+
+  // UI / legado -> DB
+  const map = {
+    waiting: 'scheduled',
+    confirmed: 'scheduled',      // você perde a diferença no DB (por enquanto)
+    queue: 'scheduled',
+    'in-progress': 'scheduled',
+
+    completed: 'done',
+    done: 'done',
+
+    absent: 'no_show',
+    'no-show': 'no_show',
+    no_show: 'no_show',
+
+    cancelado: 'canceled',
+    canceled: 'canceled',
+    cancelled: 'canceled',
+    canceled: 'canceled',
+
+    reagendado: 'rescheduled',
+    rescheduled: 'rescheduled',
+  };
+
+  return map[v] ?? 'scheduled';
+}
+
+
 // ─── Pool de conexão PostgreSQL ─────────────────────
 const pool = new Pool({
   host: process.env.DB_HOST || 'ia.cursatto.com.br',
@@ -563,24 +598,100 @@ app.get('/api/appointments', async (req, res) => {
 
 app.post('/api/appointments', async (req, res) => {
   try {
+
     const data = req.body || {};
+
+    const client_id = data.client_id ? Number(data.client_id) : null;
+
+    const cliente_nome = String(data.cliente_nome ?? data.patientName ?? '').trim();
+
+    // telefone: aceita cliente_telefone OU phone (do formData do modal)
+    const cliente_telefone = String(
+      data.cliente_telefone ?? data.phone ?? data.celular ?? data.telefone ?? ''
+    ).trim();
+
+    const professional_id = data.professional_id ? Number(data.professional_id) : (
+      data.profissional_id ? Number(data.profissional_id) : null
+    );
+
+    const insurance_plan_id =
+      data.insurance_plan_id != null
+        ? Number(data.insurance_plan_id)
+        : (data.healthInsurance && data.healthInsurance !== 'particular'
+            ? Number(data.healthInsurance)
+            : null);
+
+    const service_id = data.service_id ? Number(data.service_id) : null;
+
+    const tipo = data.tipo ?? 'consultation';
+    const inicio = data.inicio;
+    const fim = data.fim;
+
+    const rawStatus = String(data.status ?? 'scheduled').toLowerCase();
+
+    const statusMap = {
+      // padrão do DB (já ok)
+      scheduled: 'scheduled',
+      canceled: 'canceled',
+      cancelled: 'canceled',
+      rescheduled: 'rescheduled',
+      done: 'done',
+      no_show: 'no_show',
+
+      // padrões antigos/da UI
+      waiting: 'scheduled',
+      confirmed: 'scheduled',
+      queue: 'scheduled',
+      'in-progress': 'scheduled',
+      completed: 'done',
+      absent: 'no_show',
+
+      // PT (se aparecer)
+      confirmado: 'scheduled',
+      cancelado: 'canceled',
+      reagendado: 'rescheduled',
+      atendido: 'done',
+      falta: 'no_show',
+    };
+
+    const status = statusMap[rawStatus] ?? 'scheduled';
+
+    const observacao = data.observacao ?? data.notes ?? null;
+
+    // validacoes (para numero cair em erro 500 do Postgres)
+
+    if (!cliente_nome) return res.status(400).json({ error: 'cliente_nome é obrigatório' });
+    if (!cliente_telefone) return res.status(400).json({ error: 'cliente_telefone é obrigatório' });
+    if (!inicio || !fim) return res.status(400).json({ error: 'inicio e fim são obrigatórios' });
+    if (!professional_id) return res.status(400).json({ error: 'professional_id é obrigatório' });
+
     const result = await tenantQuery(
       req.schemaName,
-      `INSERT INTO appointments (cliente_id, cliente_nome, inicio, fim, profissional_id, convenio_id, observacao, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING *`,
+      `
+      INSERT INTO appointments
+        (client_id, cliente_nome, cliente_telefone, tipo, inicio, fim, status, observacao,
+         professional_id, service_id, insurance_plan_id)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+      RETURNING *
+      `,
       [
-        data.cliente_id,
-        data.cliente_nome,
-        data.inicio,
-        data.fim,
-        data.profissional_id,
-        data.convenio_id,
-        data.observacao,
-        data.status || 'scheduled',
+        client_id,
+        cliente_nome,
+        cliente_telefone,
+        tipo,
+        inicio,
+        fim,
+        status,
+        observacao,
+        professional_id,
+        service_id,
+        insurance_plan_id,
       ]
     );
+
     res.json(result.rows[0]);
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -590,24 +701,74 @@ app.post('/api/appointments', async (req, res) => {
 app.put('/api/appointments/:id', async (req, res) => {
   try {
     const data = req.body || {};
+
+    const client_id = data.client_id ? Number(data.client_id) : null;
+
+    const cliente_nome = String(data.cliente_nome ?? data.patientName ?? '').trim();
+
+    const cliente_telefone = String(
+      data.cliente_telefone ?? data.phone ?? data.celular ?? data.telefone ?? ''
+    ).trim();
+
+    const professional_id = data.professional_id ? Number(data.professional_id) : (
+      data.profissional_id ? Number(data.profissional_id) : null
+    );
+
+    const insurance_plan_id =
+      data.insurance_plan_id != null
+        ? Number(data.insurance_plan_id)
+        : (data.healthInsurance && data.healthInsurance !== 'particular'
+            ? Number(data.healthInsurance)
+            : null);
+
+    const service_id = data.service_id ? Number(data.service_id) : null;
+
+    const tipo = data.tipo ?? 'consultation';
+    const inicio = data.inicio;
+    const fim = data.fim;
+    const status = mapStatusToDb(data.status ?? 'scheduled');
+    const observacao = data.observacao ?? data.notes ?? null;
+
+    if (!cliente_nome) return res.status(400).json({ error: 'cliente_nome é obrigatório' });
+    if (!cliente_telefone) return res.status(400).json({ error: 'cliente_telefone é obrigatório' });
+    if (!inicio || !fim) return res.status(400).json({ error: 'inicio e fim são obrigatórios' });
+    if (!professional_id) return res.status(400).json({ error: 'professional_id é obrigatório' });
+
     const result = await tenantQuery(
       req.schemaName,
-      `UPDATE appointments
-       SET cliente_id=$1, cliente_nome=$2, inicio=$3, fim=$4, profissional_id=$5, convenio_id=$6, observacao=$7, status=$8, updated_at=NOW()
-       WHERE id=$9
-       RETURNING *`,
+      `
+      UPDATE appointments
+         SET client_id=$1,
+             cliente_nome=$2,
+             cliente_telefone=$3,
+             tipo=$4,
+             inicio=$5,
+             fim=$6,
+             status=$7,
+             observacao=$8,
+             professional_id=$9,
+             service_id=$10,
+             insurance_plan_id=$11,
+             updated_at=NOW()
+       WHERE id=$12
+       RETURNING *
+      `,
       [
-        data.cliente_id,
-        data.cliente_nome,
-        data.inicio,
-        data.fim,
-        data.profissional_id,
-        data.convenio_id,
-        data.observacao,
-        data.status,
+        client_id,
+        cliente_nome,
+        cliente_telefone,
+        tipo,
+        inicio,
+        fim,
+        status,
+        observacao,
+        professional_id,
+        service_id,
+        insurance_plan_id,
         req.params.id,
       ]
     );
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -617,7 +778,7 @@ app.put('/api/appointments/:id', async (req, res) => {
 
 app.patch('/api/appointments/:id/status', async (req, res) => {
   try {
-    const { status } = req.body || {};
+    const status = mapStatusToDb(req.body?.status);
     const result = await tenantQuery(
       req.schemaName,
       `UPDATE appointments SET status=$1, updated_at=NOW() WHERE id=$2 RETURNING *`,
@@ -682,9 +843,25 @@ app.put('/api/specialties/:id', async (req, res) => {
   }
 });
 
+// ─── Convênios (insurance_plans no BD) ───────────────────────────
+// Mantém o endpoint /api/health-insurances por compatibilidade com o front,
+// mas usa a tabela insurance_plans (coluna is_active) no schema do tenant.
+
 app.get('/api/health-insurances', async (req, res) => {
   try {
-    const result = await tenantQuery(req.schemaName, 'SELECT * FROM health_insurances ORDER BY name');
+    const result = await tenantQuery(
+      req.schemaName,
+      `
+      SELECT
+        id::text AS id,
+        name,
+        is_active AS active,
+        created_at,
+        updated_at
+      FROM insurance_plans
+      ORDER BY name
+      `
+    );
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -694,14 +871,19 @@ app.get('/api/health-insurances', async (req, res) => {
 
 app.post('/api/health-insurances', async (req, res) => {
   try {
-    const { name, active } = req.body || {};
+    const { name, active, is_active } = req.body || {};
+    const flag = (active ?? is_active ?? true);
+
     const result = await tenantQuery(
       req.schemaName,
-      `INSERT INTO health_insurances (name, active)
-       VALUES ($1,$2)
-       RETURNING *`,
-      [name, active ?? true]
+      `
+      INSERT INTO insurance_plans (name, is_active)
+      VALUES ($1, $2)
+      RETURNING id::text AS id, name, is_active AS active, created_at, updated_at
+      `,
+      [name, flag]
     );
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
@@ -711,18 +893,29 @@ app.post('/api/health-insurances', async (req, res) => {
 
 app.put('/api/health-insurances/:id', async (req, res) => {
   try {
-    const { name, active } = req.body || {};
+    const { name, active, is_active } = req.body || {};
+    const flag = (active ?? is_active ?? true);
+
     const result = await tenantQuery(
       req.schemaName,
-      `UPDATE health_insurances SET name=$1, active=$2, updated_at=NOW() WHERE id=$3 RETURNING *`,
-      [name, active ?? true, req.params.id]
+      `
+      UPDATE insurance_plans
+      SET name = $1,
+          is_active = $2,
+          updated_at = NOW()
+      WHERE id = $3
+      RETURNING id::text AS id, name, is_active AS active, created_at, updated_at
+      `,
+      [name, flag, req.params.id]
     );
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // ═══════════════════════════════════════════════════
 // DASHBOARD
