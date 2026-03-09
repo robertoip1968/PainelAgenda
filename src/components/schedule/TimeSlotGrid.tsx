@@ -19,22 +19,30 @@ interface TimeSlotGridProps {
   intervalMinutes?: number;
 }
 
-const statusColors: Record<AppointmentStatus, string> = {
-  'waiting': 'bg-status-waiting/20 border-l-status-waiting',
-  'confirmed': 'bg-status-confirmed/20 border-l-status-confirmed',
-  'queue': 'bg-status-queue/20 border-l-status-queue',
-  'in-progress': 'bg-status-in-progress/20 border-l-status-in-progress',
-  'completed': 'bg-status-completed/20 border-l-status-completed',
-  'absent': 'bg-status-absent/20 border-l-status-absent',
+// Cores conforme sua regra:
+// scheduled (azul), canceled (cinza), rescheduled (amarelo), done (verde), no_show (preto)
+const statusRowClasses: Record<AppointmentStatus, string> = {
+  scheduled: 'bg-blue-50/70 border-l-blue-600',
+  canceled: 'bg-gray-50/70 border-l-gray-500',
+  rescheduled: 'bg-yellow-50/70 border-l-yellow-500',
+  done: 'bg-green-50/70 border-l-green-600',
+  no_show: 'bg-black/10 border-l-black',
+};
+
+const statusDotClasses: Record<AppointmentStatus, string> = {
+  scheduled: 'bg-blue-500',
+  canceled: 'bg-gray-500',
+  rescheduled: 'bg-yellow-500',
+  done: 'bg-green-500',
+  no_show: 'bg-black',
 };
 
 const allStatuses: AppointmentStatus[] = [
-  'waiting',
-  'confirmed',
-  'queue',
-  'in-progress',
-  'completed',
-  'absent',
+  'scheduled',
+  'canceled',
+  'rescheduled',
+  'done',
+  'no_show',
 ];
 
 export function TimeSlotGrid({
@@ -46,13 +54,11 @@ export function TimeSlotGrid({
   intervalMinutes = 15,
 }: TimeSlotGridProps) {
   const slots: string[] = [];
-  
+
   for (let hour = startHour; hour <= endHour; hour++) {
     for (let minute = 0; minute < 60; minute += intervalMinutes) {
       if (hour === endHour && minute > 0) break;
-      slots.push(
-        `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`
-      );
+      slots.push(`${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
     }
   }
 
@@ -78,23 +84,24 @@ export function TimeSlotGrid({
       <div className="max-h-[calc(100vh-320px)] overflow-y-auto scrollbar-thin">
         {slots.map((time) => {
           const appointment = getAppointmentForSlot(time);
-          
+
           return (
             <div
               key={time}
               className={cn(
-                "grid grid-cols-[80px_1fr_48px] border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors",
-                appointment && statusColors[appointment.status],
-                appointment && "border-l-4"
+                'grid grid-cols-[80px_1fr_48px] border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors',
+                appointment && statusRowClasses[appointment.status],
+                appointment && 'border-l-4'
               )}
             >
-              <div 
+              <div
                 onClick={() => onSlotClick(time, appointment)}
                 className="p-3 text-sm font-medium text-muted-foreground border-r border-border cursor-pointer"
               >
                 {time}
               </div>
-              <div 
+
+              <div
                 onClick={() => onSlotClick(time, appointment)}
                 className="p-3 min-h-[48px] cursor-pointer"
               >
@@ -102,25 +109,34 @@ export function TimeSlotGrid({
                   <div className="animate-fade-in">
                     <p className="font-medium text-sm">{appointment.cliente_nome}</p>
                     <p className="text-xs text-muted-foreground">
-                      {appointment.professionalName} • {appointment.tipo === 'consultation' ? 'Consulta' : appointment.tipo === 'exam' ? 'Exame' : appointment.tipo === 'return' ? 'Retorno' : 'Procedimento'}
+                      {appointment.professionalName} •{' '}
+                      {appointment.tipo === 'consultation'
+                        ? 'Consulta'
+                        : appointment.tipo === 'exam'
+                        ? 'Exame'
+                        : appointment.tipo === 'return'
+                        ? 'Retorno'
+                        : 'Procedimento'}
                     </p>
                   </div>
                 )}
               </div>
+
               <div className="p-2 flex items-center justify-center border-l border-border">
                 {appointment && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         className="h-8 w-8"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 bg-popover">
+
+                    <DropdownMenuContent align="end" className="w-52 bg-popover">
                       {allStatuses.map((status) => (
                         <DropdownMenuItem
                           key={status}
@@ -129,16 +145,11 @@ export function TimeSlotGrid({
                             handleStatusChange(appointment.id, status);
                           }}
                           className={cn(
-                            "flex items-center gap-2 cursor-pointer",
-                            appointment.status === status && "bg-muted"
+                            'flex items-center gap-2 cursor-pointer',
+                            appointment.status === status && 'bg-muted'
                           )}
                         >
-                          <div 
-                            className="w-3 h-3 rounded-sm shrink-0"
-                            style={{ 
-                              backgroundColor: `hsl(var(--status-${status}))` 
-                            }}
-                          />
+                          <div className={cn('w-3 h-3 rounded-sm shrink-0', statusDotClasses[status])} />
                           <span>{STATUS_LABELS[status]}</span>
                         </DropdownMenuItem>
                       ))}

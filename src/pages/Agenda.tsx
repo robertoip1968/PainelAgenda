@@ -53,8 +53,9 @@ export function Agenda() {
   }, [healthInsurances]);
 
   const normalizeStatus = (s: any): AppointmentStatus => {
-    const allowed: AppointmentStatus[] = ['waiting','confirmed','queue','in-progress','completed','absent'];
-    return allowed.includes(s) ? s : 'waiting';
+    const v = String(s ?? '').toLowerCase();
+    const allowed: AppointmentStatus[] = ['scheduled', 'canceled', 'rescheduled', 'done', 'no_show'];
+    return (allowed as string[]).includes(v) ? (v as AppointmentStatus) : 'scheduled';
   };
 
   const appointmentsForUI = useMemo(() => {

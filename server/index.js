@@ -23,37 +23,32 @@ app.use(cors());
 app.use(express.json());
 
 // Funcao de mapeamento do status de atendimento
-
+// (DB continua com: scheduled | canceled | rescheduled | done | no_show)
 function mapStatusToDb(input) {
-  const v = String(input ?? '').toLowerCase();
+  const v = String(input ?? 'scheduled').toLowerCase();
 
-  // DB (permitidos)
+  // DB (permitidos pelo CHECK)
   if (['scheduled', 'canceled', 'rescheduled', 'done', 'no_show'].includes(v)) return v;
 
-  // UI / legado -> DB
-  const map = {
+  // Compatibilidade (caso algum front antigo ainda envie outros códigos)
+  const legacy = {
     waiting: 'scheduled',
-    confirmed: 'scheduled',      // você perde a diferença no DB (por enquanto)
+    confirmed: 'scheduled',
     queue: 'scheduled',
     'in-progress': 'scheduled',
 
     completed: 'done',
-    done: 'done',
-
     absent: 'no_show',
-    'no-show': 'no_show',
-    no_show: 'no_show',
 
     cancelado: 'canceled',
-    canceled: 'canceled',
     cancelled: 'canceled',
-    canceled: 'canceled',
 
     reagendado: 'rescheduled',
-    rescheduled: 'rescheduled',
+
+    'no-show': 'no_show',
   };
 
-  return map[v] ?? 'scheduled';
+  return legacy[v] ?? 'scheduled';
 }
 
 
@@ -62,7 +57,7 @@ const pool = new Pool({
   host: process.env.DB_HOST || 'ia.cursatto.com.br',
   port: parseInt(process.env.DB_PORT || '5432'),
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || '',
+  password: String(process.env.DB_PASSWORD || ''),
   database: process.env.DB_NAME || 'painelagenda',
   max: 20,
   idleTimeoutMillis: 30000,
@@ -627,34 +622,7 @@ app.post('/api/appointments', async (req, res) => {
     const inicio = data.inicio;
     const fim = data.fim;
 
-    const rawStatus = String(data.status ?? 'scheduled').toLowerCase();
-
-    const statusMap = {
-      // padrão do DB (já ok)
-      scheduled: 'scheduled',
-      canceled: 'canceled',
-      cancelled: 'canceled',
-      rescheduled: 'rescheduled',
-      done: 'done',
-      no_show: 'no_show',
-
-      // padrões antigos/da UI
-      waiting: 'scheduled',
-      confirmed: 'scheduled',
-      queue: 'scheduled',
-      'in-progress': 'scheduled',
-      completed: 'done',
-      absent: 'no_show',
-
-      // PT (se aparecer)
-      confirmado: 'scheduled',
-      cancelado: 'canceled',
-      reagendado: 'rescheduled',
-      atendido: 'done',
-      falta: 'no_show',
-    };
-
-    const status = statusMap[rawStatus] ?? 'scheduled';
+    const status = mapStatusToDb(data.status ?? 'scheduled');
 
     const observacao = data.observacao ?? data.notes ?? null;
 
@@ -967,8 +935,7 @@ async function computeAvgWaitMinutes(schemaName) {
     return r.rows?.[0]?.minutes ?? null;
   }
 
-  // 2) Fallback: duração média (fim - inicio) para atendimentos concluídos/andamento (hoje)
-  // (Se você depois criar colunas de check-in/início real, automaticamente vai usar a regra 1)
+  // 2) Fallback: duração média (fim - inicio) para atendimentos concluídos (hoje)
   if (cols.has('fim') && cols.has('inicio')) {
     const q = `
       SELECT AVG(EXTRACT(EPOCH FROM (fim - inicio)) / 60.0) AS minutes
@@ -976,7 +943,7 @@ async function computeAvgWaitMinutes(schemaName) {
       WHERE inicio::date = CURRENT_DATE
         AND fim IS NOT NULL
         AND inicio IS NOT NULL
-        AND status IN ('completed','in-progress')
+        AND status IN ('done')
     `;
     const r = await tenantQuery(schemaName, q);
     return r.rows?.[0]?.minutes ?? null;

@@ -1,11 +1,10 @@
 // Reflete o campo `status` da tabela appointments
-export type AppointmentStatus = 
-  | 'waiting' 
-  | 'confirmed' 
-  | 'queue' 
-  | 'in-progress' 
-  | 'completed' 
-  | 'absent';
+export type AppointmentStatus =
+  | 'scheduled'
+  | 'canceled'
+  | 'rescheduled'
+  | 'done'
+  | 'no_show';
 
 // Reflete a tabela `specialties`
 export interface Specialty {
@@ -87,26 +86,26 @@ export interface TimeSlot {
   appointment?: Appointment;
 }
 
+// Labels em PT alinhados ao CHECK do DB
 export const STATUS_LABELS: Record<AppointmentStatus, string> = {
-  'waiting': 'Aguardando Confirmação',
-  'confirmed': 'Confirmado',
-  'queue': 'Aguardando Atendimento',
-  'in-progress': 'Em Atendimento',
-  'completed': 'Atendido',
-  'absent': 'Falta',
+  scheduled: 'Agendado',
+  canceled: 'Cancelado',
+  rescheduled: 'Reagendado',
+  done: 'Atendido',
+  no_show: 'Falta',
 };
 
 export const APPOINTMENT_TYPE_LABELS: Record<string, string> = {
-  'consultation': 'Consulta',
-  'exam': 'Exame',
-  'return': 'Retorno',
-  'procedure': 'Procedimento',
+  consultation: 'Consulta',
+  exam: 'Exame',
+  return: 'Retorno',
+  procedure: 'Procedimento',
 };
 
 export const AREA_LABELS: Record<ProfessionalArea, string> = {
-  'medico': 'Médico',
-  'dentista': 'Dentista',
-  'exame': 'Exame',
+  medico: 'Médico',
+  dentista: 'Dentista',
+  exame: 'Exame',
 };
 
 export interface WhatsAppMessage {
