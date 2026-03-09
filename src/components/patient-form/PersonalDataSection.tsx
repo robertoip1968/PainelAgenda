@@ -95,16 +95,19 @@ export function PersonalDataSection({ formData, updateForm }: Props) {
           />
         </div>
 
-        <div className="md:col-span-2 space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={formData.email}
-            onChange={(e) => updateForm('email', e.target.value)}
-            placeholder="email@exemplo.com"
-          />
-        </div>
+	<div className="md:col-span-2 space-y-2">
+	  <Label htmlFor="email">
+	    Email <span className="text-red-500">*</span>
+	  </Label>
+	  <Input
+	    id="email"
+	    type="email"
+	    required
+	    value={formData.email}
+	    onChange={(e) => updateForm('email', e.target.value)}
+	    placeholder="email@exemplo.com"
+	  />
+	</div>
       </CardContent>
     </Card>
   );

@@ -6,8 +6,20 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { usePatients, useDeletePatient } from '@/hooks/useApiData';
 import { Plus, Search, Edit, Trash2, Phone, Mail, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
 import { toast } from 'sonner';
+
+function formatDateOnly(value?: string | null) {
+  if (!value) return '';
+
+  const dateOnly = String(value).slice(0, 10);
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    const [year, month, day] = dateOnly.split('-');
+    return `${day}/${month}/${year}`;
+  }
+
+  return '';
+}
 
 export function Patients() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +56,9 @@ export function Patients() {
       <MainLayout title="Pacientes" subtitle="Erro ao carregar">
         <div className="text-center py-12 text-destructive">
           <p>Erro ao carregar pacientes: {(error as Error).message}</p>
-          <p className="text-sm text-muted-foreground mt-2">Verifique se a API backend está rodando.</p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Verifique se a API backend está rodando.
+          </p>
         </div>
       </MainLayout>
     );
@@ -63,6 +77,7 @@ export function Patients() {
               className="pl-9"
             />
           </div>
+
           <Link to="/pacientes/novo">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -83,6 +98,7 @@ export function Patients() {
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {filteredPatients.map((patient) => (
                 <TableRow key={patient.id} className="hover:bg-muted/30">
@@ -93,18 +109,21 @@ export function Patients() {
                           {patient.full_name.charAt(0)}
                         </span>
                       </div>
+
                       <div>
                         <p className="font-medium">{patient.full_name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {patient.city}{patient.state_uf ? `, ${patient.state_uf}` : ''}
+                          {patient.city}
+                          {patient.state_uf ? `, ${patient.state_uf}` : ''}
                         </p>
                       </div>
                     </div>
                   </TableCell>
+
                   <TableCell className="font-mono text-sm">{patient.cpf}</TableCell>
-                  <TableCell>
-                    {format(new Date(patient.birth_date), 'dd/MM/yyyy')}
-                  </TableCell>
+
+                  <TableCell>{formatDateOnly(patient.birth_date)}</TableCell>
+
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center gap-1 text-sm">
@@ -117,11 +136,13 @@ export function Patients() {
                       </div>
                     </div>
                   </TableCell>
+
                   <TableCell>
                     <span className="px-2 py-1 text-xs rounded-full bg-secondary/20 text-secondary">
                       {patient.insurance_plan_id ? `Plano #${patient.insurance_plan_id}` : 'Particular'}
                     </span>
                   </TableCell>
+
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
                       <Link to={`/pacientes/${patient.id}/editar`}>
@@ -129,6 +150,7 @@ export function Patients() {
                           <Edit className="w-4 h-4" />
                         </Button>
                       </Link>
+
                       <Button
                         variant="ghost"
                         size="icon"
@@ -141,6 +163,14 @@ export function Patients() {
                   </TableCell>
                 </TableRow>
               ))}
+
+              {filteredPatients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Nenhum paciente encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
