@@ -28,6 +28,14 @@ export function useSaveProfessional() {
   });
 }
 
+export function useDeleteProfessional() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => professionalsApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['professionals'] }),
+  });
+}
+
 // ─── Pacientes ──────────────────────────────────────
 export function usePatients() {
   return useQuery({ queryKey: ['patients'], queryFn: patientsApi.list });

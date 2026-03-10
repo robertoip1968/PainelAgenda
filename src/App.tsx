@@ -46,6 +46,7 @@ const App = () => (
             <Route path="/pacientes/:id/editar" element={<PatientForm />} />
             <Route path="/profissionais" element={<Professionals />} />
             <Route path="/profissionais/novo" element={<ProfessionalForm />} />
+            <Route path="/profissionais/:id/editar" element={<ProfessionalForm />} />
             <Route path="/mensagens" element={<Messages />} />
             <Route path="/convenios" element={<HealthInsurances />} />
             <Route path="/especialidades" element={<Specialties />} />

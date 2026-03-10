@@ -4,14 +4,16 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { useProfessionals, useAppointments } from '@/hooks/useApiData';
+import { useProfessionals, useAppointments, useDeleteProfessional } from '@/hooks/useApiData';
 import { AREA_LABELS } from '@/types';
-import { Plus, Search, Edit, Calendar, Phone, Mail, Loader2 } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Calendar, Phone, Mail, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 export function Professionals() {
   const [searchTerm, setSearchTerm] = useState('');
   const { data: professionals = [], isLoading, error } = useProfessionals();
+  const deleteProfessional = useDeleteProfessional();
   const today = format(new Date(), 'yyyy-MM-dd');
   const { data: appointments = [] } = useAppointments({ date: today });
 
@@ -24,6 +26,15 @@ export function Professionals() {
     const profAppointments = appointments.filter((a) => a.professional_id === profId);
     const completed = profAppointments.filter((a) => a.status === 'completed').length;
     return { total: profAppointments.length, completed };
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm('Tem certeza que deseja excluir este profissional?')) {
+      deleteProfessional.mutate(id, {
+        onSuccess: () => toast.success('Profissional excluído com sucesso!'),
+        onError: (err) => toast.error(`Erro: ${err.message}`),
+      });
+    }
   };
 
   if (isLoading) {
@@ -60,6 +71,7 @@ export function Professionals() {
               className="pl-9"
             />
           </div>
+
           <Link to="/profissionais/novo">
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -71,6 +83,7 @@ export function Professionals() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredProfessionals.map((prof) => {
             const stats = getProfessionalStats(prof.id);
+
             return (
               <Card key={prof.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6">
@@ -84,9 +97,24 @@ export function Professionals() {
                         <p className="text-sm text-muted-foreground">{prof.specialtyName}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Edit className="w-4 h-4" />
-                    </Button>
+
+                    <div className="flex items-center gap-1">
+                      <Link to={`/profissionais/${prof.id}/editar`}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </Link>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(prof.id)}
+                        disabled={deleteProfessional.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
 
                   <div className="space-y-2 mb-4">
@@ -113,12 +141,14 @@ export function Professionals() {
                         <span className="text-muted-foreground"> agendamentos</span>
                       </div>
                     </div>
+
                     <div className="mt-2 w-full bg-muted rounded-full h-2">
                       <div
                         className="bg-secondary rounded-full h-2 transition-all"
                         style={{ width: stats.total > 0 ? `${(stats.completed / stats.total) * 100}%` : '0%' }}
                       />
                     </div>
+
                     <p className="text-xs text-muted-foreground mt-1">
                       {stats.completed} atendidos de {stats.total}
                     </p>

@@ -15,7 +15,14 @@ export interface Specialty {
 }
 
 // Reflete a tabela `professionals`
-export type ProfessionalArea = 'medico' | 'dentista' | 'exame';
+export type ProfessionalArea = 'medica' | 'odontologica' | 'laboratorial';
+
+export const AREA_LABELS: Record<ProfessionalArea, string> = {
+  medica: 'Médica',
+  odontologica: 'Odontológica',
+  laboratorial: 'Laboratorial',
+};
+
 
 export interface Professional {
   id: number;
@@ -100,12 +107,6 @@ export const APPOINTMENT_TYPE_LABELS: Record<string, string> = {
   exam: 'Exame',
   return: 'Retorno',
   procedure: 'Procedimento',
-};
-
-export const AREA_LABELS: Record<ProfessionalArea, string> = {
-  medico: 'Médico',
-  dentista: 'Dentista',
-  exame: 'Exame',
 };
 
 export interface WhatsAppMessage {
