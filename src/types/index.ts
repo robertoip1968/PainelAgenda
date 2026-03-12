@@ -124,3 +124,43 @@ export interface HealthInsurance {
   name: string;
   active: boolean;
 }
+
+// ─── Dashboard ──────────────────────────────────────
+export type DashboardCategory =
+  | 'contatos'
+  | 'agendamentos'
+  | 'confirmacoes'
+  | 'cancelamentos'
+  | 'reagendamentos'
+  | 'no_show';
+
+export interface DashboardChartItem {
+  key: DashboardCategory;
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface PendingConfirmationItem {
+  id: string;
+  cliente_nome: string;
+  professional_name: string;
+  inicio: string;
+  tipo: string;
+}
+
+export interface DashboardOverview {
+  chart: DashboardChartItem[];
+  pendingConfirmations: PendingConfirmationItem[];
+}
+
+export interface DashboardDetailItem {
+  id: string;
+  name: string;
+  info: string;
+  date: string;
+  time: string;
+  type: string;
+  status_text: string;
+  appointment_status?: AppointmentStatus | null;
+}

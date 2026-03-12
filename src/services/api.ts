@@ -1,4 +1,14 @@
-import { Professional, Patient, Appointment, Specialty, HealthInsurance, WhatsAppMessage } from '@/types';
+import {
+  Professional,
+  Patient,
+  Appointment,
+  Specialty,
+  HealthInsurance,
+  WhatsAppMessage,
+  DashboardOverview,
+  DashboardDetailItem,
+  DashboardCategory,
+} from '@/types';
 
 /**
  * Base URL da API backend.
@@ -121,6 +131,22 @@ export const dashboardApi = {
     request<{ appointments_today: number; patients_total: number; professionals_active: number; avg_wait_time: string }>(
       '/dashboard/stats'
     ),
+
+  overview: (params?: { date?: string; period?: 'current' | 'last' }) => {
+    const query = new URLSearchParams();
+    if (params?.date) query.set('date', params.date);
+    if (params?.period) query.set('period', params.period);
+    const qs = query.toString();
+    return request<DashboardOverview>(`/dashboard/overview${qs ? `?${qs}` : ''}`);
+  },
+
+  details: (params: { category: DashboardCategory; date?: string; period?: 'current' | 'last' }) => {
+    const query = new URLSearchParams();
+    query.set('category', params.category);
+    if (params?.date) query.set('date', params.date);
+    if (params?.period) query.set('period', params.period);
+    return request<DashboardDetailItem[]>(`/dashboard/details?${query.toString()}`);
+  },
 };
 
 // ─── Mensagens (WhatsApp) ─────────────────────────

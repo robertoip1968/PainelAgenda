@@ -8,7 +8,14 @@ import {
   dashboardApi,
   messagesApi,
 } from '@/services/api';
-import { Professional, Patient, Appointment, Specialty, HealthInsurance } from '@/types';
+import {
+  Professional,
+  Patient,
+  Appointment,
+  Specialty,
+  HealthInsurance,
+  DashboardCategory,
+} from '@/types';
 
 // ─── Profissionais ──────────────────────────────────
 export function useProfessionals() {
@@ -125,7 +132,34 @@ export function useSaveHealthInsurance() {
 
 // ─── Dashboard ──────────────────────────────────────
 export function useDashboardStats() {
-  return useQuery({ queryKey: ['dashboard-stats'], queryFn: dashboardApi.stats });
+  return useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: dashboardApi.stats,
+    staleTime: 120_000,
+    gcTime: 300_000,
+  });
+}
+
+export function useDashboardOverview(params?: { date?: string; period?: 'current' | 'last' }) {
+  return useQuery({
+    queryKey: ['dashboard-overview', params],
+    queryFn: () => dashboardApi.overview(params),
+    staleTime: 120_000,
+    gcTime: 300_000,
+  });
+}
+
+export function useDashboardDetails(
+  category: DashboardCategory | null,
+  params?: { date?: string; period?: 'current' | 'last' }
+) {
+  return useQuery({
+    queryKey: ['dashboard-details', category, params],
+    queryFn: () => dashboardApi.details({ category: category as DashboardCategory, ...params }),
+    enabled: !!category,
+    staleTime: 120_000,
+    gcTime: 300_000,
+  });
 }
 
 // ─── Mensagens (WhatsApp) ─────────────────────────

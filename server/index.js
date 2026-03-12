@@ -153,7 +153,8 @@ app.use('/api', async (req, res, next) => {
 });
 
 // Helper: executa query dentro do schema do tenant
-async function tenantQuery(schemaName, text, params = []) {
+// options.statementTimeoutMs (number): aplica SET LOCAL statement_timeout apenas para esta transação
+async function tenantQuery(schemaName, text, params = [], options = {}) {
   const client = await pool.connect();
 
   // Sanitiza o schema e coloca entre aspas para evitar problemas
@@ -161,6 +162,11 @@ async function tenantQuery(schemaName, text, params = []) {
 
   try {
     await client.query('BEGIN');
+    if (options && typeof options.statementTimeoutMs === 'number') {
+      const st = Math.max(0, Math.floor(options.statementTimeoutMs));
+      // Não usa bind aqui (SET LOCAL nem sempre aceita parâmetro via driver)
+      await client.query(`SET LOCAL statement_timeout = ${st}`);
+    }
     await client.query(`SET LOCAL search_path TO "${safeSchema}", public`);
     const result = await client.query(text, params);
     await client.query('COMMIT');
@@ -924,6 +930,222 @@ function minutesToLabel(minutes) {
   if (!Number.isFinite(m) || m <= 0) return '—';
   return `${m}min`;
 }
+
+// ─── Dashboard: helpers (faixa de datas com índice-friendly) ────────────────
+const DASHBOARD_TZ = process.env.DASHBOARD_TZ || 'America/Cuiaba';
+const DASHBOARD_TZ_SAFE = String(DASHBOARD_TZ).replace(/'/g, "");
+
+// Range para colunas timestamptz (appointments.inicio)
+function buildRangeClauseTimestamptz(column, date, period, tz = DASHBOARD_TZ_SAFE) {
+  const safeTz = String(tz).replace(/'/g, "");
+
+  // Data específica (YYYY-MM-DD): meia-noite no fuso, convertido para timestamptz
+  if (date) {
+    return {
+      clause: `${column} >= ($1::date::timestamp AT TIME ZONE '${safeTz}') AND ${column} < (($1::date + 1)::timestamp AT TIME ZONE '${safeTz}')`,
+      params: [date],
+    };
+  }
+
+  // Semana no fuso, convertido para timestamptz (índice-friendly)
+  if (period === 'last') {
+    return {
+      clause: `${column} >= ((date_trunc('week', (now() AT TIME ZONE '${safeTz}')) - interval '7 day') AT TIME ZONE '${safeTz}')
+              AND ${column} < (date_trunc('week', (now() AT TIME ZONE '${safeTz}')) AT TIME ZONE '${safeTz}')`,
+      params: [],
+    };
+  }
+
+  return {
+    clause: `${column} >= (date_trunc('week', (now() AT TIME ZONE '${safeTz}')) AT TIME ZONE '${safeTz}')
+            AND ${column} < ((date_trunc('week', (now() AT TIME ZONE '${safeTz}')) + interval '7 day') AT TIME ZONE '${safeTz}')`,
+    params: [],
+  };
+}
+
+// Range para colunas timestamp sem tz (historico_chat.datahora)
+function buildRangeClauseTimestamp(column, date, period, tz = DASHBOARD_TZ_SAFE) {
+  const safeTz = String(tz).replace(/'/g, "");
+
+  // Data específica (YYYY-MM-DD): comparando com timestamp local
+  if (date) {
+    return {
+      clause: `${column} >= $1::date::timestamp AND ${column} < ($1::date + 1)::timestamp`,
+      params: [date],
+    };
+  }
+
+  // Semana usando timezone() -> timestamp local
+  if (period === 'last') {
+    return {
+      clause: `${column} >= (date_trunc('week', timezone('${safeTz}', now())) - interval '7 day')
+              AND ${column} < date_trunc('week', timezone('${safeTz}', now()))`,
+      params: [],
+    };
+  }
+
+  return {
+    clause: `${column} >= date_trunc('week', timezone('${safeTz}', now()))
+            AND ${column} < (date_trunc('week', timezone('${safeTz}', now())) + interval '7 day')`,
+    params: [],
+  };
+}
+
+// ─── Dashboard: overview (gráfico + aguardando confirmação) ────────────────
+app.get('/api/dashboard/overview', async (req, res) => {
+  try {
+    const date = String(req.query.date ?? '').trim(); // YYYY-MM-DD
+    const period = req.query.period === 'last' ? 'last' : 'current';
+
+    const apptRange = buildRangeClauseTimestamptz('a.inicio', date, period);
+    const chatRange = buildRangeClauseTimestamp('hc.datahora', date, period);
+
+    // IMPORTANTE: sequencial (evita abrir várias conexões ao mesmo tempo)
+    const appointmentsAgg = await tenantQuery(
+      req.schemaName,
+      `
+      SELECT
+        COUNT(*) FILTER (WHERE a.status = 'scheduled')::int AS agendamentos,
+        COUNT(*) FILTER (WHERE COALESCE(a.confirmado, false) = true)::int AS confirmacoes,
+        COUNT(*) FILTER (WHERE a.status = 'canceled')::int AS cancelamentos,
+        COUNT(*) FILTER (WHERE a.status = 'rescheduled')::int AS reagendamentos,
+        COUNT(*) FILTER (WHERE a.status = 'no_show')::int AS no_show
+      FROM appointments a
+      WHERE ${apptRange.clause}
+      `,
+      apptRange.params,
+      { statementTimeoutMs: 4000 }
+    );
+
+    const contactsAgg = await tenantQuery(
+      req.schemaName,
+      `
+      SELECT COUNT(DISTINCT NULLIF(TRIM(hc.telefone_cliente), ''))::int AS contatos
+      FROM historico_chat hc
+      WHERE ${chatRange.clause}
+      `,
+      chatRange.params,
+      { statementTimeoutMs: 4000 }
+    );
+
+    const pending = await tenantQuery(
+      req.schemaName,
+      `
+      SELECT
+        a.id::text,
+        a.cliente_nome,
+        COALESCE(p.full_name, 'Sem profissional') AS professional_name,
+        a.inicio,
+        a.tipo
+      FROM appointments a
+      LEFT JOIN professionals p ON p.id = a.professional_id
+      WHERE a.status IN ('scheduled', 'rescheduled')
+        AND COALESCE(a.confirmado, false) = false
+        AND a.inicio >= NOW()
+      ORDER BY a.inicio ASC
+      LIMIT 5
+      `,
+      [],
+      { statementTimeoutMs: 4000 }
+    );
+
+    const a = appointmentsAgg.rows[0] || {};
+    const c = contactsAgg.rows[0] || {};
+
+    res.json({
+      chart: [
+        { key: 'contatos', name: 'Contatos', value: c.contatos ?? 0, color: '#3B82F6' },
+        { key: 'agendamentos', name: 'Agendamentos', value: a.agendamentos ?? 0, color: '#F472B6' },
+        { key: 'confirmacoes', name: 'Confirmações', value: a.confirmacoes ?? 0, color: '#F59E0B' },
+        { key: 'cancelamentos', name: 'Cancelamentos', value: a.cancelamentos ?? 0, color: '#10B981' },
+        { key: 'reagendamentos', name: 'Reagendamento', value: a.reagendamentos ?? 0, color: '#6EE7B7' },
+        { key: 'no_show', name: 'No-show', value: a.no_show ?? 0, color: '#EF4444' },
+      ],
+      pendingConfirmations: pending.rows,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Dashboard: details (tabela abaixo do gráfico) ─────────────────────────
+app.get('/api/dashboard/details', async (req, res) => {
+  try {
+    const category = String(req.query.category ?? '').trim();
+    const date = String(req.query.date ?? '').trim();
+    const period = req.query.period === 'last' ? 'last' : 'current';
+
+    const valid = new Set(['contatos', 'agendamentos', 'confirmacoes', 'cancelamentos', 'reagendamentos', 'no_show']);
+    if (!valid.has(category)) return res.status(400).json({ error: 'Categoria inválida' });
+
+    if (category === 'contatos') {
+      const range = buildRangeClauseTimestamp('hc.datahora', date, period);
+      const r = await tenantQuery(
+        req.schemaName,
+        `
+        SELECT DISTINCT ON (COALESCE(NULLIF(TRIM(hc.telefone_cliente), ''), hc.id::text))
+          hc.id::text AS id,
+          COALESCE(NULLIF(TRIM(hc.nome_cliente), ''), 'Contato sem nome') AS name,
+          COALESCE(NULLIF(TRIM(hc.telefone_cliente), ''), '—') AS info,
+          TO_CHAR(hc.datahora, 'DD/MM/YYYY') AS date,
+          TO_CHAR(hc.datahora, 'HH24:MI') AS time,
+          COALESCE(NULLIF(TRIM(hc.tipo_mensagem), ''), 'Mensagem') AS type,
+          COALESCE(NULLIF(TRIM(hc.intencao), ''), 'Sem intenção') AS status_text,
+          NULL::text AS appointment_status
+        FROM historico_chat hc
+        WHERE ${range.clause}
+        ORDER BY COALESCE(NULLIF(TRIM(hc.telefone_cliente), ''), hc.id::text), hc.datahora DESC
+        LIMIT 20
+        `,
+        range.params,
+        { statementTimeoutMs: 4000 }
+      );
+
+      return res.json(r.rows);
+    }
+
+    const statusMap = {
+      agendamentos: `a.status = 'scheduled'`,
+      confirmacoes: `COALESCE(a.confirmado, false) = true`,
+      cancelamentos: `a.status = 'canceled'`,
+      reagendamentos: `a.status = 'rescheduled'`,
+      no_show: `a.status = 'no_show'`,
+    };
+
+    const range = buildRangeClauseTimestamptz('a.inicio', date, period);
+    const r = await tenantQuery(
+      req.schemaName,
+      `
+      SELECT
+        a.id::text AS id,
+        a.cliente_nome AS name,
+        COALESCE(p.full_name, 'Sem profissional') AS info,
+        TO_CHAR(a.inicio AT TIME ZONE '${DASHBOARD_TZ_SAFE}', 'DD/MM/YYYY') AS date,
+        TO_CHAR(a.inicio AT TIME ZONE '${DASHBOARD_TZ_SAFE}', 'HH24:MI') AS time,
+        COALESCE(NULLIF(TRIM(a.tipo), ''), '—') AS type,
+        a.status AS appointment_status,
+        CASE
+          WHEN COALESCE(a.confirmado, false) = true THEN 'Confirmado'
+          ELSE 'Pendente'
+        END AS status_text
+      FROM appointments a
+      LEFT JOIN professionals p ON p.id = a.professional_id
+      WHERE ${range.clause}
+        AND ${statusMap[category]}
+      ORDER BY a.inicio DESC
+      LIMIT 20
+      `,
+      range.params,
+      { statementTimeoutMs: 4000 }
+    );
+
+    return res.json(r.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Calcula "Tempo Médio de Espera" de forma resiliente:
 // - Se existir coluna de fila/início real, usa ela
