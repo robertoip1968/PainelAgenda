@@ -4,22 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Stethoscope, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Stethoscope, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Specialty } from '@/types';
-import { useSpecialties, useSaveSpecialty } from '@/hooks/useApiData';
+import { useSpecialties, useSaveSpecialty, useDeleteSpecialty } from '@/hooks/useApiData';
 
 export function Specialties() {
   const { toast } = useToast();
   const { data: specialties = [], isLoading, error } = useSpecialties();
   const saveSpecialty = useSaveSpecialty();
+  const deleteSpecialty = useDeleteSpecialty();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingSpecialty, setEditingSpecialty] = useState<Specialty | null>(null);
   const [formData, setFormData] = useState({ name: '', is_active: true });
@@ -37,7 +35,11 @@ export function Specialties() {
 
   const handleSave = () => {
     if (!formData.name.trim()) {
-      toast({ title: "Erro", description: "O nome da especialidade é obrigatório.", variant: "destructive" });
+      toast({
+        title: 'Erro',
+        description: 'O nome da especialidade é obrigatório.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -46,22 +48,62 @@ export function Specialties() {
       {
         onSuccess: () => {
           toast({
-            title: editingSpecialty ? "Especialidade atualizada!" : "Especialidade cadastrada!",
-            description: editingSpecialty ? "Os dados foram atualizados com sucesso." : "A especialidade foi adicionada com sucesso.",
+            title: editingSpecialty ? 'Especialidade atualizada!' : 'Especialidade cadastrada!',
+            description: editingSpecialty
+              ? 'Os dados foram atualizados com sucesso.'
+              : 'A especialidade foi adicionada com sucesso.',
           });
           setIsDialogOpen(false);
           setEditingSpecialty(null);
           setFormData({ name: '', is_active: true });
         },
-        onError: (err) => toast({ title: "Erro", description: err.message, variant: "destructive" }),
+        onError: (err: any) =>
+          toast({ title: 'Erro', description: err?.message || 'Falha ao salvar.', variant: 'destructive' }),
       }
     );
+  };
+
+  const handleDelete = (specialty: Specialty) => {
+    const ok = confirm(`Excluir a especialidade "${specialty.name}"? Essa ação não pode ser desfeita.`);
+    if (!ok) return;
+
+    deleteSpecialty.mutate(specialty.id, {
+      onSuccess: () => {
+        toast({
+          title: 'Especialidade excluída!',
+          description: 'Registro removido com sucesso.',
+        });
+      },
+      onError: (err: any) => {
+        const msg = err?.message || 'Não foi possível excluir.';
+        toast({
+          title: 'Erro ao excluir',
+          description: msg.includes('409')
+            ? 'Esta especialidade está vinculada a profissionais. Remova os vínculos antes de excluir.'
+            : msg,
+          variant: 'destructive',
+        });
+      },
+    });
   };
 
   if (isLoading) {
     return (
       <MainLayout title="Especialidades" subtitle="Carregando...">
-        <div className="flex items-center justify-center h-64"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <MainLayout title="Especialidades" subtitle="Erro ao carregar">
+        <div className="text-center py-12 text-destructive">
+          <p>Erro ao carregar especialidades: {(error as Error).message}</p>
+          <p className="text-sm text-muted-foreground mt-2">Verifique se a API backend está rodando.</p>
+        </div>
       </MainLayout>
     );
   }
@@ -74,6 +116,7 @@ export function Specialties() {
             <Stethoscope className="w-5 h-5" />
             <span>{specialties.length} especialidades cadastradas</span>
           </div>
+
           <Button onClick={() => handleOpenDialog()} className="gap-2">
             <Plus className="w-4 h-4" />
             Nova Especialidade
@@ -87,26 +130,48 @@ export function Specialties() {
                 <TableHead className="w-20">ID</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead className="w-32">Status</TableHead>
-                <TableHead className="w-24 text-right">Ações</TableHead>
+                <TableHead className="w-32 text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {specialties.map((specialty) => (
                 <TableRow key={specialty.id}>
                   <TableCell className="font-mono text-muted-foreground">#{specialty.id}</TableCell>
                   <TableCell className="font-medium">{specialty.name}</TableCell>
                   <TableCell>
-                    <Badge variant={specialty.is_active ? "default" : "secondary"}>
+                    <Badge variant={specialty.is_active ? 'default' : 'secondary'}>
                       {specialty.is_active ? 'Ativo' : 'Inativo'}
                     </Badge>
                   </TableCell>
+
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(specialty)}>
-                      <Pencil className="w-4 h-4" />
-                    </Button>
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(specialty)}>
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(specialty)}
+                        disabled={deleteSpecialty.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
+
+              {specialties.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    Nenhuma especialidade cadastrada.
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </div>
@@ -116,23 +181,43 @@ export function Specialties() {
             <DialogHeader>
               <DialogTitle>{editingSpecialty ? 'Editar Especialidade' : 'Nova Especialidade'}</DialogTitle>
               <DialogDescription>
-                {editingSpecialty ? 'Atualize os dados da especialidade.' : 'Preencha os dados para cadastrar uma nova especialidade.'}
+                {editingSpecialty
+                  ? 'Atualize os dados da especialidade.'
+                  : 'Preencha os dados para cadastrar uma nova especialidade.'}
               </DialogDescription>
             </DialogHeader>
+
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nome da Especialidade *</Label>
-                <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="Ex: Cardiologia" />
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Ex: Cardiologia"
+                />
               </div>
+
               <div className="flex items-center justify-between">
                 <Label htmlFor="active">Especialidade Ativa</Label>
-                <Switch id="active" checked={formData.is_active} onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })} />
+                <Switch
+                  id="active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                />
               </div>
             </div>
+
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                Cancelar
+              </Button>
               <Button onClick={handleSave} disabled={saveSpecialty.isPending}>
-                {saveSpecialty.isPending ? 'Salvando...' : editingSpecialty ? 'Salvar Alterações' : 'Cadastrar'}
+                {saveSpecialty.isPending
+                  ? 'Salvando...'
+                  : editingSpecialty
+                    ? 'Salvar Alterações'
+                    : 'Cadastrar'}
               </Button>
             </DialogFooter>
           </DialogContent>

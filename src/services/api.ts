@@ -102,6 +102,8 @@ export const specialtiesApi = {
     request<Specialty>('/specialties', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: Partial<Specialty>) =>
     request<Specialty>(`/specialties/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  delete: (id: number) =>
+    request<{ ok: true }>(`/specialties/${id}`, { method: 'DELETE' }),
 };
 
 // ─── Convênios ──────────────────────────────────────

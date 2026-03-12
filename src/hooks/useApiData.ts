@@ -101,6 +101,14 @@ export function useSaveSpecialty() {
   });
 }
 
+export function useDeleteSpecialty() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => specialtiesApi.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['specialties'] }),
+  });
+}
+
 // ─── Convênios ──────────────────────────────────────
 export function useHealthInsurances() {
   return useQuery({ queryKey: ['healthInsurances'], queryFn: healthInsurancesApi.list });

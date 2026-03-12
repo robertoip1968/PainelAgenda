@@ -801,13 +801,41 @@ app.put('/api/specialties/:id', async (req, res) => {
     const { name, is_active } = req.body || {};
     const result = await tenantQuery(
       req.schemaName,
-      `UPDATE specialties SET name=$1, is_active=$2, updated_at=NOW() WHERE id=$3 RETURNING *`,
+      `UPDATE specialties SET name=$1, is_active=$2 WHERE id=$3 RETURNING *`,
       [name, is_active ?? true, req.params.id]
     );
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/specialties/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const result = await tenantQuery(
+      req.schemaName,
+      `DELETE FROM specialties WHERE id=$1 RETURNING id`,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Especialidade não encontrada' });
+    }
+
+    return res.json({ ok: true });
+  } catch (err) {
+    // FK violation (especialidade em uso)
+    if (err && err.code === '23503') {
+      return res.status(409).json({
+        error: 'Esta especialidade está vinculada a profissionais. Remova os vínculos antes de excluir.',
+      });
+    }
+
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 });
 
