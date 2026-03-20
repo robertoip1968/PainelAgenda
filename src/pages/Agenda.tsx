@@ -47,19 +47,49 @@ export function Agenda() {
 
   const healthById = useMemo(() => {
     // ids podem ser string no front, mas no BD normalmente é bigint
-    return new Map(
-      healthInsurances.map((h) => [Number(h.id), h])
-    );
+    return new Map(healthInsurances.map((h) => [Number(h.id), h]));
   }, [healthInsurances]);
 
+  // Normaliza status vindos do banco/API para os valores suportados no front
+  // E já “mapeia” confirmed/schedule -> scheduled para manter compatibilidade
   const normalizeStatus = (s: any): AppointmentStatus => {
     const v = String(s ?? '').toLowerCase();
+
+    if (v === 'confirmed' || v === 'schedule') return 'scheduled';
+
     const allowed: AppointmentStatus[] = ['scheduled', 'canceled', 'rescheduled', 'done', 'no_show'];
     return (allowed as string[]).includes(v) ? (v as AppointmentStatus) : 'scheduled';
   };
 
+  // Prioridade: scheduled/rescheduled/confirmed > done > no_show > canceled
+  // (confirmed entra como scheduled via normalizeStatus)
+  const STATUS_RANK: Record<AppointmentStatus, number> = {
+    scheduled: 1,
+    rescheduled: 1,
+    done: 2,
+    no_show: 3,
+    canceled: 4,
+  };
+
+  const getRank = (s: AppointmentStatus) => STATUS_RANK[s] ?? 99;
+
+  const pickBest = (a: Appointment, b: Appointment) => {
+    const ra = getRank(a.status);
+    const rb = getRank(b.status);
+    if (ra !== rb) return ra < rb ? a : b;
+
+    // desempate: mais recente (updated_at/created_at/inicio)
+    const ta = new Date((a as any).updated_at ?? (a as any).created_at ?? (a as any).inicio ?? 0).getTime();
+    const tb = new Date((b as any).updated_at ?? (b as any).created_at ?? (b as any).inicio ?? 0).getTime();
+    if (ta !== tb) return ta > tb ? a : b;
+
+    // último desempate: maior id
+    return Number((a as any).id ?? 0) > Number((b as any).id ?? 0) ? a : b;
+  };
+
   const appointmentsForUI = useMemo(() => {
-    return allAppointments.map((a) => {
+    // 1) normaliza/deriva campos (date/time/professionalName/healthInsurance/status)
+    const normalized = allAppointments.map((a) => {
       const inicio = a.inicio ? new Date(a.inicio) : null;
 
       const time = (a as any).time || (inicio ? format(inicio, 'HH:mm') : '');
@@ -85,6 +115,17 @@ export function Agenda() {
         status: normalizeStatus(a.status),
       } as Appointment;
     });
+
+    // 2) 1 registro por slot (professional + date + time), escolhendo o “melhor” status
+    const bySlot = new Map<string, Appointment>();
+
+    for (const appt of normalized) {
+      const key = `${(appt as any).professional_id}|${(appt as any).date}|${(appt as any).time}`;
+      const current = bySlot.get(key);
+      bySlot.set(key, current ? pickBest(current, appt) : appt);
+    }
+
+    return Array.from(bySlot.values());
   }, [allAppointments, dateStr, professionalsById, healthById]);
 
   const handleSlotClick = (time: string, appointment?: Appointment) => {
@@ -292,7 +333,10 @@ export function Agenda() {
               <Button variant="outline" className="w-full justify-start text-sm">
                 Localizar dia e horário disponível
               </Button>
-              <Button variant="outline" className="w-full justify-start text-sm text-destructive hover:text-destructive">
+              <Button
+                variant="outline"
+                className="w-full justify-start text-sm text-destructive hover:text-destructive"
+              >
                 Apagar agendamentos
               </Button>
             </div>

@@ -572,22 +572,45 @@ app.get('/api/appointments', async (req, res) => {
     const date = req.query.date;
     const professionalId = req.query.professional_id;
 
-    let query = 'SELECT * FROM appointments';
     const params = [];
-    const conditions = [];
+    const where = [];
 
     if (date) {
       params.push(date);
-      conditions.push(`DATE(inicio) = $${params.length}`);
+      where.push(`DATE(inicio) = $${params.length}`);
     }
 
     if (professionalId) {
       params.push(professionalId);
-      conditions.push(`professional_id = $${params.length}`);
+      where.push(`professional_id = $${params.length}`);
     }
 
-    if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
-    query += ' ORDER BY inicio';
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    // prioridade: scheduled/rescheduled > done > no_show > canceled
+    const rankSql = `
+      CASE
+        WHEN status IN ('scheduled','rescheduled') THEN 1
+        WHEN status = 'done' THEN 2
+        WHEN status = 'no_show' THEN 3
+        WHEN status = 'canceled' THEN 4
+        ELSE 99
+      END
+    `;
+
+    // 1 registro por (professional_id, inicio), escolhendo pelo rank
+    const query = `
+      SELECT DISTINCT ON (professional_id, inicio)
+        *
+      FROM appointments
+      ${whereSql}
+      ORDER BY
+        professional_id,
+        inicio,
+        ${rankSql} ASC,
+        COALESCE(updated_at, inicio) DESC,
+        id DESC
+    `;
 
     const result = await tenantQuery(req.schemaName, query, params);
     res.json(result.rows);
@@ -915,6 +938,140 @@ app.put('/api/health-insurances/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Settings: Clínica ───────────────────────────────
+app.get('/api/settings/clinic', async (req, res) => {
+  try {
+    const r = await tenantQuery(
+      req.schemaName,
+      `SELECT clinic_name, cnpj, phone, address
+       FROM clinic_settings
+       WHERE id = 1`
+    );
+    return res.json(r.rows[0] ?? { clinic_name: '', cnpj: '', phone: '', address: '' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/settings/clinic', async (req, res) => {
+  try {
+    const { clinic_name = '', cnpj = '', phone = '', address = '' } = req.body ?? {};
+
+    const r = await tenantQuery(
+      req.schemaName,
+      `INSERT INTO clinic_settings (id, clinic_name, cnpj, phone, address, updated_at)
+       VALUES (1, $1, $2, $3, $4, now())
+       ON CONFLICT (id) DO UPDATE SET
+         clinic_name = EXCLUDED.clinic_name,
+         cnpj        = EXCLUDED.cnpj,
+         phone       = EXCLUDED.phone,
+         address     = EXCLUDED.address,
+         updated_at  = now()
+       RETURNING clinic_name, cnpj, phone, address`,
+      [clinic_name, cnpj, phone, address]
+    );
+
+    return res.json(r.rows[0]);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ─── Settings: Agenda ───────────────────────────────
+app.get('/api/settings/agenda', async (req, res) => {
+  try {
+    const r = await tenantQuery(
+      req.schemaName,
+      `SELECT weekday_start_time, weekday_end_time,
+              saturday_start_time, saturday_end_time,
+              interval_minutes, default_duration_minutes,
+              open_sun, open_mon, open_tue, open_wed, open_thu, open_fri, open_sat
+       FROM clinic_settings
+       WHERE id = 1`
+    );
+
+    return res.json(r.rows[0] ?? {
+      weekday_start_time: '07:00',
+      weekday_end_time: '19:00',
+      saturday_start_time: '07:00',
+      saturday_end_time: '19:00',
+      interval_minutes: 15,
+      default_duration_minutes: 30,
+      open_sun: false, open_mon: true, open_tue: true, open_wed: true, open_thu: true, open_fri: true, open_sat: false,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/settings/agenda', async (req, res) => {
+  try {
+    const body = req.body ?? {};
+
+    // Se o front ainda não mandar sábado separado, a gente mantém sábado = semana por default
+    const weekdayStart = body.weekday_start_time ?? '07:00';
+    const weekdayEnd = body.weekday_end_time ?? '19:00';
+    const saturdayStart = body.saturday_start_time ?? weekdayStart;
+    const saturdayEnd = body.saturday_end_time ?? weekdayEnd;
+
+    const r = await tenantQuery(
+      req.schemaName,
+      `INSERT INTO clinic_settings (
+         id,
+         weekday_start_time, weekday_end_time,
+         saturday_start_time, saturday_end_time,
+         interval_minutes, default_duration_minutes,
+         open_sun, open_mon, open_tue, open_wed, open_thu, open_fri, open_sat,
+         updated_at
+       ) VALUES (
+         1, $1, $2, $3, $4, $5, $6,
+         $7, $8, $9, $10, $11, $12, $13,
+         now()
+       )
+       ON CONFLICT (id) DO UPDATE SET
+         weekday_start_time = EXCLUDED.weekday_start_time,
+         weekday_end_time = EXCLUDED.weekday_end_time,
+         saturday_start_time = EXCLUDED.saturday_start_time,
+         saturday_end_time = EXCLUDED.saturday_end_time,
+         interval_minutes = EXCLUDED.interval_minutes,
+         default_duration_minutes = EXCLUDED.default_duration_minutes,
+         open_sun = EXCLUDED.open_sun,
+         open_mon = EXCLUDED.open_mon,
+         open_tue = EXCLUDED.open_tue,
+         open_wed = EXCLUDED.open_wed,
+         open_thu = EXCLUDED.open_thu,
+         open_fri = EXCLUDED.open_fri,
+         open_sat = EXCLUDED.open_sat,
+         updated_at = now()
+       RETURNING weekday_start_time, weekday_end_time,
+                 saturday_start_time, saturday_end_time,
+                 interval_minutes, default_duration_minutes,
+                 open_sun, open_mon, open_tue, open_wed, open_thu, open_fri, open_sat`,
+      [
+        weekdayStart, weekdayEnd,
+        saturdayStart, saturdayEnd,
+        Number(body.interval_minutes ?? 15),
+        Number(body.default_duration_minutes ?? 30),
+        Boolean(body.open_sun),
+        Boolean(body.open_mon),
+        Boolean(body.open_tue),
+        Boolean(body.open_wed),
+        Boolean(body.open_thu),
+        Boolean(body.open_fri),
+        Boolean(body.open_sat),
+      ]
+    );
+
+    return res.json(r.rows[0]);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 });
 

@@ -202,3 +202,15 @@ export const authApi = {
     }),
   me: () => request<AuthUser>('/auth/me'),
 };
+
+import type { ClinicSettings, AgendaSettings } from '@/types';
+
+export const settingsApi = {
+  getClinic: () => request<ClinicSettings>('/settings/clinic'),
+  updateClinic: (data: Partial<ClinicSettings>) =>
+    request<ClinicSettings>('/settings/clinic', { method: 'PUT', body: JSON.stringify(data) }),
+
+  getAgenda: () => request<AgendaSettings>('/settings/agenda'),
+  updateAgenda: (data: Partial<AgendaSettings>) =>
+    request<AgendaSettings>('/settings/agenda', { method: 'PUT', body: JSON.stringify(data) }),
+};

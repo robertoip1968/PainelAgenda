@@ -177,3 +177,30 @@ export function useMessages(params?: {
     queryFn: () => messagesApi.list(params),
   });
 }
+
+import { settingsApi } from '@/services/api';
+import type { ClinicSettings, AgendaSettings } from '@/types';
+
+export function useClinicSettings() {
+  return useQuery({ queryKey: ['settings', 'clinic'], queryFn: settingsApi.getClinic });
+}
+
+export function useSaveClinicSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<ClinicSettings>) => settingsApi.updateClinic(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'clinic'] }),
+  });
+}
+
+export function useAgendaSettings() {
+  return useQuery({ queryKey: ['settings', 'agenda'], queryFn: settingsApi.getAgenda });
+}
+
+export function useSaveAgendaSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<AgendaSettings>) => settingsApi.updateAgenda(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['settings', 'agenda'] }),
+  });
+}

@@ -164,3 +164,26 @@ export interface DashboardDetailItem {
   status_text: string;
   appointment_status?: AppointmentStatus | null;
 }
+
+export type ClinicSettings = {
+  clinic_name: string
+  cnpj: string
+  phone: string
+  address: string
+}
+
+export type AgendaSettings = {
+  weekday_start_time: string
+  weekday_end_time: string
+  saturday_start_time: string
+  saturday_end_time: string
+  interval_minutes: number
+  default_duration_minutes: number
+  open_sun: boolean
+  open_mon: boolean
+  open_tue: boolean
+  open_wed: boolean
+  open_thu: boolean
+  open_fri: boolean
+  open_sat: boolean
+}
